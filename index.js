@@ -1,5 +1,5 @@
 /**
- * Example 03 - Font styling
+ * Example 04 - Multiple plots
  *
  * Summary:
  *
@@ -47,7 +47,7 @@ function render(container, payload) {
         })},
 
         x: buckets.map(tickText),
-        y: buckets.map(function(d) {return d.count;})
+        y: buckets.map(baselineCount)
       },
       {
         type: 'bar',
@@ -73,6 +73,21 @@ function render(container, payload) {
 
         x: buckets.map(tickText),
         y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
+      },
+      {
+        type: 'pie',
+        name: 'Baseline',
+
+        domain: {x: [0.25, 1]},
+
+        hole: gr,
+
+        marker: {
+          colors: buckets.map(function(d, i, a) {return 'rgba(0,0,0,' + (i + 1) / a.length + ')';})
+        },
+
+        labels: buckets.map(tickText),
+        values: buckets.map(baselineCount)
       }
 
     ],
@@ -80,7 +95,7 @@ function render(container, payload) {
     // third argument: overall layout
     // https://plot.ly/javascript/configuration-options/
     {
-      width: 800,
+      width: 1400,
 
       title: '<b>Number of firms employing at least 20 electricians<br>by county, Norway</b>',
       titlefont: {
@@ -103,7 +118,8 @@ function render(container, payload) {
           family: 'Courier New, monospace',
           size: 20,
           color: '#5f5f5f'
-        }
+        },
+        domain: [0, 0.5],
       },
       yaxis: {
         title: 'Number of firms'
@@ -149,3 +165,4 @@ function render(container, payload) {
 }
 
 function tickText(d) {return d.val === 'Troms' ? '<em><b>' + d.val + '</b></em>' : d.val;}
+function baselineCount(d) {return d.count;}
