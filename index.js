@@ -1,32 +1,19 @@
 /**
- * Example 02 - Multiple traces and textual overlays
+ * Example 03 - Font styling
  *
  * Summary:
  *
- * Plot types:
- *   - cartesian plots
- *        - line / scatter chart
- *        - bar chart
- *   - more to come later!
- *
- *
- * Interactions, overlays:
+ * Font styling for:
+ *   - title
+ *   - axis title
  *   - legend
- *        - click - on/off
- *        - double-click - on, and others to become off
- *        - reset
- *   - axis titles
- *   - annotations
- *
- * Fire up the dev server
- *   budo --live --open --host localhost index.js
- *
- * Links:
- *    https://plot.ly/javascript/getting-started/
+ *   -
+ **
+ * Interactions, overlays:
+ *   - dev tip: make glyphs inspectable in Dev tools
  *
  */
 
-var Plotly = require('plotly.js');
 var d3 = Plotly.d3; // no need to bundle d3 separately; d3 is useful for glue
 
 var container = d3.select('body')
@@ -41,7 +28,6 @@ function render(container, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-
   // https://plot.ly/javascript/plotlyjs-function-reference/
   Plotly.plot(
 
@@ -54,26 +40,39 @@ function render(container, payload) {
       {
         type: 'bar',
         name: 'Baseline',
-        width: 2 * gr / 5,
+        width: 0.45 * gr,
 
-        x: buckets.map(function(d) {return d.val;}),
+        marker: {color: buckets.map(function(d) {
+          return d.val === 'Troms' ? 'rgba(0, 0, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)';
+        })},
+
+        x: buckets.map(tickText),
         y: buckets.map(function(d) {return d.count;})
       },
       {
         type: 'bar',
         name: 'Current',
-        width: 2 * gr / 5,
+        width: 0.45 * gr,
 
-        x: buckets.map(function(d) {return d.val;}),
+        marker: {color: buckets.map(function(d) {
+          return d.val === 'Troms' ? 'rgba(0, 0, 255, 0.9)' : 'rgba(0, 0, 0, 0.7)';
+        })},
+
+        x: buckets.map(tickText),
         y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
       },
       {
         type: 'scatter', // `scatter` is the default
         name: 'Historical average',
-        mode: 'lines+markers', // `lines` is the default
+        mode: 'lines', // `lines` is the default; can use 'lines+markers' etc.
 
-        x: buckets.map(function(d) {return d.val;}),
-        y: buckets.map(function(d) {return d.count * Math.random();})
+        line: {
+          color: 'rgb(223, 63, 191)',
+          width: 2
+        },
+
+        x: buckets.map(tickText),
+        y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
       }
 
     ],
@@ -82,28 +81,71 @@ function render(container, payload) {
     // https://plot.ly/javascript/configuration-options/
     {
       width: 800,
-      title: 'Number of firms employing at least 20 electricians, by county, Norway',
+
+      title: '<b>Number of firms employing at least 20 electricians<br>by county, Norway</b>',
+      titlefont: {
+        family: "Times New Roman, serif",
+        color: 'rgb(95, 95, 95)',
+        size: 24
+      },
 
       // legend: https://plot.ly/javascript/legend/#styling-and-coloring-the-legend
       showlegend: true, // the default
+
       legend: {
         x: 0.75,
         y: 0.9
       },
+
       xaxis: {
-        title: 'County'
+        title: '<b>County</b>',
+        titlefont: {
+          family: 'Courier New, monospace',
+          size: 20,
+          color: '#5f5f5f'
+        }
       },
       yaxis: {
         title: 'Number of firms'
-      }
+      },
+
+      // global font
+      font: {
+        family: 'Arial, sans-serif',
+        //size: 18,
+        //color: '#7f7f7f'
+      },
+
+      annotations: [
+        {
+          x: '<em><b>Troms</b></em>',
+          y: 5848,
+          xref: 'x',
+          yref: 'y',
+          text: 'Currently selected',
+          arrowcolor: 'rgba(0, 0, 255, 0.4)',
+          arrowwidth: 1.5,
+          arrowhead: 5,
+          showarrow: true,
+          ax: 20,
+          ay: -40
+        }
+      ]
+
     },
 
     // fourth argument: configuration
     // https://plot.ly/javascript/configuration-options/
     {
-      displayModeBar: true // always on
+      displayModeBar: 'hover' // or boolean
     }
 
   );
 
+  // Dev / Debug only!!! Don't use in published code
+  // make SVG leaf node elements easily selectable
+  //Plotly.d3.selectAll('*').style('pointer-events', 'painted');
+  //Plotly.d3.selectAll('svg, g').style('pointer-events', 'none');
 }
+
+function tickText(d) {return d.val === 'Troms' ? '<em><b>' + d.val + '</b></em>' : d.val;}
