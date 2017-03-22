@@ -1,0 +1,14 @@
+{
+  "name": "example01",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Robert Monfera <monfera.robert@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "plotly.js": "^1.25.0"
+  }
+}
