@@ -1,18 +1,22 @@
 /**
- * Example 01 - A basic plot
+ * Example 02 - Multiple traces and textual overlays
  *
  * Summary:
  *
- * - use of having the D3 library:
- *       - fetching data
- *       - DOM manipulation
- *       - data handling e.g. d3.range
- *       - dataviz calc tools
+ * Plot types:
+ *   - cartesian plots
+ *        - line / scatter chart
+ *        - bar chart
+ *   - more to come later!
  *
- * - basic responsivity: fill width
  *
- * - Plotly.plot arguments
- *
+ * Interactions, overlays:
+ *   - legend
+ *        - click - on/off
+ *        - double-click - on, and others to become off
+ *        - reset
+ *   - axis titles
+ *   - annotations
  *
  * Fire up the dev server
  *   budo --live --open --host localhost index.js
@@ -31,6 +35,8 @@ var container = d3.select('body')
 
 d3.json('/mocks/payload01.json', render.bind(null, container)); // or CORS-enabled address
 
+var gr = 0.61803398875;
+
 function render(container, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
@@ -46,32 +52,56 @@ function render(container, payload) {
     // https://plot.ly/javascript/reference/
     [
       {
-        // bar chart:
         type: 'bar',
-        width: 0.61803398875,
-
-        /*
-         // line and/or scatter plot:
-         type: 'scatter',
-         mode: 'lines+markers',
-        */
+        name: 'Baseline',
+        width: 2 * gr / 5,
 
         x: buckets.map(function(d) {return d.val;}),
         y: buckets.map(function(d) {return d.count;})
+      },
+      {
+        type: 'bar',
+        name: 'Current',
+        width: 2 * gr / 5,
+
+        x: buckets.map(function(d) {return d.val;}),
+        y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
+      },
+      {
+        type: 'scatter', // `scatter` is the default
+        name: 'Historical average',
+        mode: 'lines+markers', // `lines` is the default
+
+        x: buckets.map(function(d) {return d.val;}),
+        y: buckets.map(function(d) {return d.count * Math.random();})
       }
+
     ],
 
     // third argument: overall layout
     // https://plot.ly/javascript/configuration-options/
     {
-      // width: 800,
-      title: 'Number of firms employing at least 20 electricians, by county, Norway'
+      width: 800,
+      title: 'Number of firms employing at least 20 electricians, by county, Norway',
+
+      // legend: https://plot.ly/javascript/legend/#styling-and-coloring-the-legend
+      showlegend: true, // the default
+      legend: {
+        x: 0.75,
+        y: 0.9
+      },
+      xaxis: {
+        title: 'County'
+      },
+      yaxis: {
+        title: 'Number of firms'
+      }
     },
 
     // fourth argument: configuration
     // https://plot.ly/javascript/configuration-options/
     {
-      displayModeBar: false
+      displayModeBar: true // always on
     }
 
   );
