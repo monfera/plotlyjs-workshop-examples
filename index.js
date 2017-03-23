@@ -3,39 +3,38 @@
  *
  * Summary:
  *
- * Font styling for:
- *   - title
- *   - axis title
- *   - legend
- *   -
- **
- * Interactions, overlays:
- *   - dev tip: make glyphs inspectable in Dev tools
+ * - Pie in subplot (1st commit)
+ * - Pie in separate plot
+ * - Control overflow (for the benefit of pie texts)
+ * - Generating a color palette; color manipulation
+ * - Pie chart in general
  *
  */
 
-var d3 = Plotly.d3; // no need to bundle d3 separately; d3 is useful for glue
+var d3 = Plotly.d3;
 
-var container = d3.select('body')
+var cartesianContainer = d3.select('body')
   .append('div')
-  .attr('id', 'myGraph');
+  .style('float', 'left');
 
-d3.json('/mocks/payload01.json', render.bind(null, container)); // or CORS-enabled address
+var piechartContainer = d3.select('body')
+  .append('div')
+  .style('float', 'left');
+
+var palette = d3.scale.category20();
+
+d3.json('/mocks/payload01.json', render.bind(null, cartesianContainer, piechartContainer));
 
 var gr = 0.61803398875;
 
-function render(container, payload) {
+function render(cartesianContainer, piechartContainer, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-  // https://plot.ly/javascript/plotlyjs-function-reference/
   Plotly.plot(
 
-    // first argument: DIV container object or DIV id string
-    container.node(), // 'myGraph',
+    cartesianContainer.node(),
 
-    // second argument: array of trace objects
-    // https://plot.ly/javascript/reference/
     [
       {
         type: 'bar',
@@ -73,38 +72,23 @@ function render(container, payload) {
 
         x: buckets.map(tickText),
         y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
-      },
-      {
-        type: 'pie',
-        name: 'Baseline',
-
-        domain: {x: [0.25, 1]},
-
-        hole: gr,
-
-        marker: {
-          colors: buckets.map(function(d, i, a) {return 'rgba(0,0,0,' + (i + 1) / a.length + ')';})
-        },
-
-        labels: buckets.map(tickText),
-        values: buckets.map(baselineCount)
       }
 
     ],
 
-    // third argument: overall layout
-    // https://plot.ly/javascript/configuration-options/
     {
-      width: 1400,
+      height: 450,
+      width: 768,
+
+      margin: {r: 0},
 
       title: '<b>Number of firms employing at least 20 electricians<br>by county, Norway</b>',
       titlefont: {
-        family: "Times New Roman, serif",
+        family: 'Times New Roman, serif',
         color: 'rgb(95, 95, 95)',
         size: 24
       },
 
-      // legend: https://plot.ly/javascript/legend/#styling-and-coloring-the-legend
       showlegend: true, // the default
 
       legend: {
@@ -119,18 +103,11 @@ function render(container, payload) {
           size: 20,
           color: '#5f5f5f'
         },
-        domain: [0, 0.5],
+        domain: [0, 1]
       },
-      yaxis: {
-        title: 'Number of firms'
-      },
+      yaxis: { title: 'Number of firms' },
 
-      // global font
-      font: {
-        family: 'Arial, sans-serif',
-        //size: 18,
-        //color: '#7f7f7f'
-      },
+      font: { family: 'Arial, sans-serif' },
 
       annotations: [
         {
@@ -148,15 +125,49 @@ function render(container, payload) {
         }
       ]
 
-    },
-
-    // fourth argument: configuration
-    // https://plot.ly/javascript/configuration-options/
-    {
-      displayModeBar: 'hover' // or boolean
     }
-
   );
+
+  Plotly.plot(
+
+    piechartContainer.node(),
+
+    [
+       {
+        type: 'pie',
+        name: 'Baseline',
+
+        hole: gr,
+        direction: 'clockwise',
+
+        textinfo: 'label',
+
+        marker: {
+          colors: buckets.map(function(d, i) {
+            var rgb = d3.rgb(palette(i));
+            rgb.a = 0.3;
+            return rgb;
+          })
+        },
+
+        labels: buckets.map(tickText),
+        values: buckets.map(baselineCount)
+      }
+
+    ],
+
+    {
+      height: 450,
+      width: 520,
+
+      margin: {l: 20, t: 130},
+
+      font: { family: 'Arial, sans-serif' }
+    }
+  );
+
+  piechartContainer.select('svg')
+    .style('overflow', 'visible');
 
   // Dev / Debug only!!! Don't use in published code
   // make SVG leaf node elements easily selectable
