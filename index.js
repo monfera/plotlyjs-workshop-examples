@@ -1,23 +1,24 @@
 /**
- * Example 04 - Multiple plots
+ * Example 05 - Custom choropleth with MapBox
  *
  * Summary:
- *
- * - Pie in subplot (1st commit)
- * - Pie in separate plot
- * - Control overflow (for the benefit of pie texts)
- * - Generating a color palette; color manipulation
- * - Pie chart in general
- *
+ *   - mapbox
+ *   - mapbox based choropleth
+ *   - callback hell w/ multiple async inputs
+ *   - GeoJSON
  */
 
 var d3 = Plotly.d3;
 
 var cartesianContainer = d3.select('body')
   .append('div')
-  .style('float', 'left');
+  //.style('float', 'left');
 
 var piechartContainer = d3.select('body')
+  .append('div')
+  .style('float', 'left');
+
+var mapContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
@@ -78,7 +79,7 @@ function render(cartesianContainer, piechartContainer, payload) {
 
     {
       height: 450,
-      width: 768,
+      width: 1000,
 
       margin: {r: 0},
 
@@ -98,11 +99,6 @@ function render(cartesianContainer, piechartContainer, payload) {
 
       xaxis: {
         title: '<b>County</b>',
-        titlefont: {
-          family: 'Courier New, monospace',
-          size: 20,
-          color: '#5f5f5f'
-        },
         domain: [0, 1]
       },
       yaxis: { title: 'Number of firms' },
@@ -157,10 +153,10 @@ function render(cartesianContainer, piechartContainer, payload) {
     ],
 
     {
-      height: 450,
+      height: 520,
       width: 520,
 
-      margin: {l: 20, t: 130},
+      margin: {t: 0, l: 150},
 
       font: { family: 'Arial, sans-serif' }
     }
@@ -169,11 +165,93 @@ function render(cartesianContainer, piechartContainer, payload) {
   piechartContainer.select('svg')
     .style('overflow', 'visible');
 
+  Plotly.d3.json('mocks/norwayMunicipalities.json', function(bluejson) {
+
+    var countyNames = buckets.map(function(d) {return d.val;});
+    var countyFeatures = bluejson.features.filter(function(d) {return countyNames.indexOf(d.properties.name) !== -1;});
+    countyFeatures.forEach(function(d) {d.properties.groupOne = Math.random() < 0.5;})
+    var countyFeatureCollection1 = {
+      type: "FeatureCollection",
+      features: countyFeatures.filter(function(d) {return d.properties.groupOne && d.properties.name !== 'Troms';})
+    }
+    var countyFeatureCollection2 = {
+      type: "FeatureCollection",
+      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && d.properties.name !== 'Troms';})
+    }
+    var countyFeatureCollection3 = {
+      type: "FeatureCollection",
+      features: countyFeatures.filter(function(d) {return d.properties.groupOne && d.properties.name === 'Troms';})
+    }
+    var countyFeatureCollection4 = {
+      type: "FeatureCollection",
+      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && d.properties.name === 'Troms';})
+    }
+
+    Plotly.plot(
+
+      mapContainer.node(),
+
+      [{
+        type: 'scattermapbox',
+        lat: [46],
+        lon: [-74]
+      }],
+
+      {
+        height: 500,
+        width: 510,
+        margin: {t: 0},
+        mapbox: {
+          center: {
+            lat: 65.35,
+            lon: 17.8
+          },
+          style: 'light',
+          zoom: 3.2,
+          layers: [
+            {
+              sourcetype: 'geojson',
+              source: countyFeatureCollection1,
+              type: 'fill',
+              color: 'grey'
+            },
+            {
+              sourcetype: 'geojson',
+              source: countyFeatureCollection2,
+              type: 'fill',
+              color: 'white'
+            },
+            {
+              sourcetype: 'geojson',
+              source: countyFeatureCollection3,
+              type: 'fill',
+              color: 'blue'
+            },
+            {
+              sourcetype: 'geojson',
+              source: countyFeatureCollection4,
+              type: 'fill',
+              color: 'lightblue'
+            }
+          ]
+        }
+      },
+
+      {
+        mapboxAccessToken: 'pk.eyJ1IjoiY2hyaWRkeXAiLCJhIjoiRy1GV1FoNCJ9.yUPu7qwD_Eqf_gKNzDrrCQ'
+      }
+    );
+
+
+  });
+
   // Dev / Debug only!!! Don't use in published code
   // make SVG leaf node elements easily selectable
   //Plotly.d3.selectAll('*').style('pointer-events', 'painted');
   //Plotly.d3.selectAll('svg, g').style('pointer-events', 'none');
 }
+
+
 
 function tickText(d) {return d.val === 'Troms' ? '<em><b>' + d.val + '</b></em>' : d.val;}
 function baselineCount(d) {return d.count;}
