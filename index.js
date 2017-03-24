@@ -24,7 +24,7 @@ var piechartContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
-var mapContainer = d3.select('body')
+var geoContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
@@ -38,9 +38,9 @@ var selectedCounty = 'Troms';
 
 function barData(buckets, selectedCounty) {
 
-  function tickText(d) {return d.val === selectedCounty ? '<em><b>' + d.val + '</b></em>' : d.val;}
+  var tickText = tickTextMaker(selectedCounty);
 
-  return     [
+  return [
     {
       type: 'bar',
       name: 'Baseline',
@@ -84,7 +84,7 @@ function barData(buckets, selectedCounty) {
 
 function barLayout(buckets, selectedCounty) {
 
-  return     {
+  return {
     height: 450,
     width: 1200,
 
@@ -129,139 +129,153 @@ function barLayout(buckets, selectedCounty) {
   };
 }
 
-function render(cartesianContainer, piechartContainer, payload) {
+function pieData(buckets, selectedCounty) {
 
-  function tickText(d) {return d.val === selectedCounty ? '<em><b>' + d.val + '</b></em>' : d.val;}
+  return [
+    {
+      type: 'pie',
+      name: 'Baseline',
+
+      hole: gr,
+      direction: 'clockwise',
+
+      textinfo: 'label',
+
+      marker: {
+        colors: buckets.map(function(d, i) {
+          var rgb = d3.rgb(palette(i));
+          rgb.a = 0.3;
+          return rgb;
+        })
+      },
+
+      labels: buckets.map(tickTextMaker(selectedCounty)),
+      values: buckets.map(baselineCount)
+    }
+
+  ];
+}
+
+function pieLayout() {
+
+  return {
+    height: 540,
+    width: 680,
+
+    margin: {t: 0, l: 150},
+
+    font: { family: 'Arial, sans-serif' }
+  };
+}
+
+function geoData() {
+  return [{
+    type: 'scattermapbox',
+    lat: 46,
+    lon: -74
+  }];
+}
+
+function geoLayout(geojson, buckets, selectedCounty) {
+
+  var countyNames = buckets.map(function(d) {return d.val;});
+  var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(geojsonNameAccessor(d)) !== -1;});
+  var counts = buckets.map(function(d) {return d.count || 0});
+  var colorScale = d3.scale.linear().domain(d3.extent(counts.concat([0])));
+  var palette =  d3.interpolateLab("white", "black");
+
+  var layers = countyFeatures.map(function(d) {
+    var name = geojsonNameAccessor(d);
+    var bucketIndex = countyNames.indexOf(name);
+    var count = bucketIndex === -1 ? 0 : counts[bucketIndex];
+    return {
+      sourcetype: 'geojson',
+      source: d,
+      type: 'fill',
+      fill: {
+        outlinecolor: name === selectedCounty ? 'blue' : '#444'
+      },
+      color: palette(colorScale(count))
+    };
+  });
+
+  return {
+    height: 600,
+    width: 612 - 80,
+    margin: {t: 0, l: 0},
+    mapbox: {
+      center: {
+        lat: 65.35,
+        lon: 17.8
+      },
+      style: 'light',
+      zoom: 3.5,
+      layers: layers
+    }
+  };
+}
+
+
+function renderBarchart(root, buckets, selectedCounty) {
+  Plotly.newPlot(
+    root,
+    barData(buckets, selectedCounty),
+    barLayout(buckets, selectedCounty)
+  );
+  root.on('plotly_click', barClickEventHandlerMaker(root, buckets));
+}
+
+function renderPiechart(root, buckets, selectedCounty) {
+  Plotly.newPlot(
+    root,
+    pieData(buckets, selectedCounty),
+    pieLayout()
+  );
+}
+
+function renderGeo(geojson, root, buckets, selectedCounty) {
+  Plotly.newPlot(
+    root,
+    geoData(),
+    geoLayout(geojson, buckets, selectedCounty),
+    { mapboxAccessToken: 'pk.eyJ1IjoiY2hyaWRkeXAiLCJhIjoiRy1GV1FoNCJ9.yUPu7qwD_Eqf_gKNzDrrCQ' }
+  );
+}
+
+function barClickEventHandlerMaker(root, buckets) {
+  return function (d) {
+    var county = d.points[0].x;
+    renderBarchart(root, buckets, county);
+  }
+}
+
+function render(cartesianContainer, piechartContainer, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-  function barClickEventHandler(d) {
-    var county = d.points[0].x;
-    cartesianContainer.node().removeListener('plotly_click', barClickEventHandler);
-    renderBarchart(buckets, county);
-  }
+  renderBarchart(cartesianContainer.node(), buckets, selectedCounty);
+  renderPiechart(piechartContainer.node(), buckets, selectedCounty);
 
-  function renderBarchart(buckets, selectedCounty) {
-    Plotly.newPlot(
-      cartesianContainer.node(),
-      barData(buckets, selectedCounty),
-      barLayout(buckets, selectedCounty)
-    );
-    cartesianContainer.node().on('plotly_click', barClickEventHandler);
-  }
-
-  renderBarchart(buckets, selectedCounty);
-
-  Plotly.newPlot(
-
-    piechartContainer.node(),
-
-    [
-       {
-        type: 'pie',
-        name: 'Baseline',
-
-        hole: gr,
-        direction: 'clockwise',
-
-        textinfo: 'label',
-
-        marker: {
-          colors: buckets.map(function(d, i) {
-            var rgb = d3.rgb(palette(i));
-            rgb.a = 0.3;
-            return rgb;
-          })
-        },
-
-        labels: buckets.map(tickText),
-        values: buckets.map(baselineCount)
-      }
-
-    ],
-
-    {
-      height: 540,
-      width: 680,
-
-      margin: {t: 0, l: 150},
-
-      font: { family: 'Arial, sans-serif' }
-    }
-  );
+  if(false)
+    Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
+      renderGeo(geojson, geoContainer.node(), buckets, selectedCounty);
+    });
 
   piechartContainer.select('svg')
     .style('overflow', 'visible');
 
-  if(0)
-  Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
-
-    var countyNames = buckets.map(function(d) {return d.val;});
-    var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(geojsonNameAccessor(d)) !== -1;});
-    var counts = buckets.map(function(d) {return d.count || 0});
-    var colorScale = d3.scale.linear().domain(d3.extent(counts.concat([0])));
-    var palette =  d3.interpolateLab("white", "black");
-
-    var layers = countyFeatures.map(function(d) {
-      var name = geojsonNameAccessor(d);
-      var bucketIndex = countyNames.indexOf(name);
-      var count = bucketIndex === -1 ? 0 : counts[bucketIndex];
-      return {
-        sourcetype: 'geojson',
-        source: d,
-        type: 'fill',
-        fill: {
-          outlinecolor: name === selectedCounty ? 'blue' : '#444'
-        },
-        color: palette(colorScale(count))
-      }
-    })
-
-    Plotly.newPlot(
-
-      mapContainer.node(),
-
-      [{
-        type: 'scattermapbox',
-        lat: 46,
-        lon: -74
-      }],
-
-      {
-        height: 600,
-        width: 612 - 80,
-        margin: {t: 0, l: 0},
-        mapbox: {
-          center: {
-            lat: 65.35,
-            lon: 17.8
-          },
-          style: 'light',
-          zoom: 3.5,
-          layers: layers
-        }
-      },
-
-      {
-        mapboxAccessToken: 'pk.eyJ1IjoiY2hyaWRkeXAiLCJhIjoiRy1GV1FoNCJ9.yUPu7qwD_Eqf_gKNzDrrCQ'
-      }
-    );
-
-
-  });
-
   // Dev / Debug only!!! Don't use in published code
   // make SVG leaf node elements easily selectable
-  //Plotly.d3.selectAll('*').style('pointer-events', 'painted');
-  //Plotly.d3.selectAll('svg, g').style('pointer-events', 'none');
+  // Plotly.d3.selectAll('*').style('pointer-events', 'painted');
+  // Plotly.d3.selectAll('svg, g').style('pointer-events', 'none');
 }
-
-
 
 function baselineCount(d) {return d.count;}
-function geojsonNameAccessor(d) {
-  return d.properties.name || d.properties.navn;
+function geojsonNameAccessor(d) {return d.properties.name || d.properties.navn;}
+function dataNameAccessor(d) {return d.val;}
+function tickTextMaker(selectedCounty) {
+  return function(d) {
+    return d.val === selectedCounty ? '<em><b>' + d.val + '</b></em>' : d.val;
+  }
 }
-function dataNameAccessor(d) {
-  return d.val;
-}
+
