@@ -34,101 +34,125 @@ d3.json('/mocks/payload01.json', render.bind(null, cartesianContainer, piechartC
 
 var gr = 0.61803398875;
 
+var selectedCounty = 'Troms';
+
+function barData(buckets, selectedCounty) {
+
+  function tickText(d) {return d.val === selectedCounty ? '<em><b>' + d.val + '</b></em>' : d.val;}
+
+  return     [
+    {
+      type: 'bar',
+      name: 'Baseline',
+      width: 0.45 * gr,
+
+      marker: {color: buckets.map(function(d) {
+        return d.val === selectedCounty ? 'rgba(0, 0, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)';
+      })},
+
+      x: buckets.map(tickText),
+      y: buckets.map(baselineCount)
+    },
+    {
+      type: 'bar',
+      name: 'Current',
+      width: 0.45 * gr,
+
+      marker: {color: buckets.map(function(d) {
+        return d.val === selectedCounty ? 'rgba(0, 0, 255, 0.9)' : 'rgba(0, 0, 0, 0.7)';
+      })},
+
+      x: buckets.map(tickText),
+      y: buckets.map(function(d) {return d.count * 0.85;})
+    },
+    {
+      type: 'scatter', // `scatter` is the default
+      name: 'Historical average',
+      mode: 'lines', // `lines` is the default; can use 'lines+markers' etc.
+
+      line: {
+        color: 'rgb(223, 63, 191)',
+        width: 2
+      },
+
+      x: buckets.map(tickText),
+      y: buckets.map(function(d) {return d.count * 0.5;})
+    }
+
+  ];
+}
+
+function barLayout(buckets, selectedCounty) {
+
+  return     {
+    height: 450,
+    width: 1200,
+
+    title: '<b>Candidate firms for traineeships in the electrician profession by county</b>',
+    titlefont: {
+      family: 'Times New Roman, serif',
+      color: 'rgb(95, 95, 95)',
+      size: 24
+    },
+
+    showlegend: true, // the default
+
+    legend: {
+      x: 0.8,
+      y: 0.9
+    },
+
+    xaxis: {
+      title: '<b>County</b>',
+      domain: [0, 1]
+    },
+    yaxis: { title: 'Number of firms' },
+
+    font: { family: 'Arial, sans-serif' },
+
+    annotations: [
+      {
+        x: '<em><b>' + selectedCounty.replace(/(<([^>]+)>)/ig, '') + '</b></em>',
+        y: buckets[buckets.map(dataNameAccessor).indexOf(selectedCounty)].count,// 5848,
+        xref: 'x',
+        yref: 'y',
+        text: 'Currently selected',
+        arrowcolor: 'rgba(0, 0, 255, 0.4)',
+        arrowwidth: 1.5,
+        arrowhead: 5,
+        showarrow: true,
+        ax: 20,
+        ay: -40
+      }
+    ]
+
+  };
+}
+
 function render(cartesianContainer, piechartContainer, payload) {
+
+  function tickText(d) {return d.val === selectedCounty ? '<em><b>' + d.val + '</b></em>' : d.val;}
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-  Plotly.plot(
+  function barClickEventHandler(d) {
+    var county = d.points[0].x;
+    cartesianContainer.node().removeListener('plotly_click', barClickEventHandler);
+    renderBarchart(buckets, county);
+  }
 
-    cartesianContainer.node(),
+  function renderBarchart(buckets, selectedCounty) {
+    Plotly.newPlot(
+      cartesianContainer.node(),
+      barData(buckets, selectedCounty),
+      barLayout(buckets, selectedCounty)
+    );
+    cartesianContainer.node().on('plotly_click', barClickEventHandler);
+  }
 
-    [
-      {
-        type: 'bar',
-        name: 'Baseline',
-        width: 0.45 * gr,
+  renderBarchart(buckets, selectedCounty);
 
-        marker: {color: buckets.map(function(d) {
-          return d.val === 'Troms' ? 'rgba(0, 0, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)';
-        })},
-
-        x: buckets.map(tickText),
-        y: buckets.map(baselineCount)
-      },
-      {
-        type: 'bar',
-        name: 'Current',
-        width: 0.45 * gr,
-
-        marker: {color: buckets.map(function(d) {
-          return d.val === 'Troms' ? 'rgba(0, 0, 255, 0.9)' : 'rgba(0, 0, 0, 0.7)';
-        })},
-
-        x: buckets.map(tickText),
-        y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
-      },
-      {
-        type: 'scatter', // `scatter` is the default
-        name: 'Historical average',
-        mode: 'lines', // `lines` is the default; can use 'lines+markers' etc.
-
-        line: {
-          color: 'rgb(223, 63, 191)',
-          width: 2
-        },
-
-        x: buckets.map(tickText),
-        y: buckets.map(function(d) {return d.count * (0.25 + 0.75 * Math.random());})
-      }
-
-    ],
-
-    {
-      height: 450,
-      width: 1200,
-
-      title: '<b>Number of firms employing electricians by county, Norway</b>',
-      titlefont: {
-        family: 'Times New Roman, serif',
-        color: 'rgb(95, 95, 95)',
-        size: 24
-      },
-
-      showlegend: true, // the default
-
-      legend: {
-        x: 0.8,
-        y: 0.9
-      },
-
-      xaxis: {
-        title: '<b>County</b>',
-        domain: [0, 1]
-      },
-      yaxis: { title: 'Number of firms' },
-
-      font: { family: 'Arial, sans-serif' },
-
-      annotations: [
-        {
-          x: '<em><b>Troms</b></em>',
-          y: 5848,
-          xref: 'x',
-          yref: 'y',
-          text: 'Currently selected',
-          arrowcolor: 'rgba(0, 0, 255, 0.4)',
-          arrowwidth: 1.5,
-          arrowhead: 5,
-          showarrow: true,
-          ax: 20,
-          ay: -40
-        }
-      ]
-
-    }
-  );
-
-  Plotly.plot(
+  Plotly.newPlot(
 
     piechartContainer.node(),
 
@@ -173,13 +197,13 @@ function render(cartesianContainer, piechartContainer, payload) {
   Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
 
     var countyNames = buckets.map(function(d) {return d.val;});
-    var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(nameAccessor(d)) !== -1;});
+    var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(geojsonNameAccessor(d)) !== -1;});
     var counts = buckets.map(function(d) {return d.count || 0});
     var colorScale = d3.scale.linear().domain(d3.extent(counts.concat([0])));
     var palette =  d3.interpolateLab("white", "black");
 
     var layers = countyFeatures.map(function(d) {
-      var name = nameAccessor(d);
+      var name = geojsonNameAccessor(d);
       var bucketIndex = countyNames.indexOf(name);
       var count = bucketIndex === -1 ? 0 : counts[bucketIndex];
       return {
@@ -187,13 +211,13 @@ function render(cartesianContainer, piechartContainer, payload) {
         source: d,
         type: 'fill',
         fill: {
-          outlinecolor: name === 'Troms' ? 'blue' : '#444'
+          outlinecolor: name === selectedCounty ? 'blue' : '#444'
         },
         color: palette(colorScale(count))
       }
     })
 
-    Plotly.plot(
+    Plotly.newPlot(
 
       mapContainer.node(),
 
@@ -234,8 +258,10 @@ function render(cartesianContainer, piechartContainer, payload) {
 
 
 
-function tickText(d) {return d.val === 'Troms' ? '<em><b>' + d.val + '</b></em>' : d.val;}
 function baselineCount(d) {return d.count;}
-function nameAccessor(d) {
+function geojsonNameAccessor(d) {
   return d.properties.name || d.properties.navn;
+}
+function dataNameAccessor(d) {
+  return d.val;
 }
