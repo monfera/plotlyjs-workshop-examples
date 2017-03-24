@@ -6,6 +6,18 @@
  *   - mapbox based choropleth
  *   - callback hell w/ multiple async inputs
  *   - GeoJSON
+ *   - command line cartography by Mike Bostock
+ *      - ndjson
+ *      - joining carto features with data(?)
+ *      - modifying properties
+ *      - lowering resolution
+ *      - TopoJSON payload or GeoJSON?
+ *
+ *  Links:
+ *    - Maps: https://plot.ly/javascript/#maps
+ *    - Mapbox example: https://plot.ly/javascript/choropleth-maps/#choropleth-map-of-florida-counties-colored-by-political-party
+ *    - Mapbox reference: https://plot.ly/javascript/reference/#scattermapbox
+ *    - Command line cartography: https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c#.eo0p0c8nm
  */
 
 var d3 = Plotly.d3;
@@ -165,26 +177,26 @@ function render(cartesianContainer, piechartContainer, payload) {
   piechartContainer.select('svg')
     .style('overflow', 'visible');
 
-  Plotly.d3.json('mocks/norwayMunicipalities.json', function(bluejson) {
+  Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
 
     var countyNames = buckets.map(function(d) {return d.val;});
-    var countyFeatures = bluejson.features.filter(function(d) {return countyNames.indexOf(d.properties.name) !== -1;});
+    var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(nameAccessor(d)) !== -1;});
     countyFeatures.forEach(function(d) {d.properties.groupOne = Math.random() < 0.5;})
     var countyFeatureCollection1 = {
       type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return d.properties.groupOne && d.properties.name !== 'Troms';})
+      features: countyFeatures.filter(function(d) {return d.properties.groupOne && nameAccessor(d) !== 'Troms';})
     }
     var countyFeatureCollection2 = {
       type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && d.properties.name !== 'Troms';})
+      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && nameAccessor(d) !== 'Troms';})
     }
     var countyFeatureCollection3 = {
       type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return d.properties.groupOne && d.properties.name === 'Troms';})
+      features: countyFeatures.filter(function(d) {return d.properties.groupOne && nameAccessor(d) === 'Troms';})
     }
     var countyFeatureCollection4 = {
       type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && d.properties.name === 'Troms';})
+      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && nameAccessor(d) === 'Troms';})
     }
 
     Plotly.plot(
@@ -255,3 +267,6 @@ function render(cartesianContainer, piechartContainer, payload) {
 
 function tickText(d) {return d.val === 'Troms' ? '<em><b>' + d.val + '</b></em>' : d.val;}
 function baselineCount(d) {return d.count;}
+function nameAccessor(d) {
+  return d.properties.name || d.properties.navn;
+}
