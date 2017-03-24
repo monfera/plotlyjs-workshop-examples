@@ -91,11 +91,9 @@ function render(cartesianContainer, piechartContainer, payload) {
 
     {
       height: 450,
-      width: 1000,
+      width: 1200,
 
-      margin: {r: 0},
-
-      title: '<b>Number of firms employing at least 20 electricians<br>by county, Norway</b>',
+      title: '<b>Number of firms employing electricians by county, Norway</b>',
       titlefont: {
         family: 'Times New Roman, serif',
         color: 'rgb(95, 95, 95)',
@@ -105,7 +103,7 @@ function render(cartesianContainer, piechartContainer, payload) {
       showlegend: true, // the default
 
       legend: {
-        x: 0.75,
+        x: 0.8,
         y: 0.9
       },
 
@@ -165,8 +163,8 @@ function render(cartesianContainer, piechartContainer, payload) {
     ],
 
     {
-      height: 520,
-      width: 520,
+      height: 540,
+      width: 600,
 
       margin: {t: 0, l: 150},
 
@@ -181,23 +179,24 @@ function render(cartesianContainer, piechartContainer, payload) {
 
     var countyNames = buckets.map(function(d) {return d.val;});
     var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(nameAccessor(d)) !== -1;});
-    countyFeatures.forEach(function(d) {d.properties.groupOne = Math.random() < 0.5;})
-    var countyFeatureCollection1 = {
-      type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return d.properties.groupOne && nameAccessor(d) !== 'Troms';})
-    }
-    var countyFeatureCollection2 = {
-      type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && nameAccessor(d) !== 'Troms';})
-    }
-    var countyFeatureCollection3 = {
-      type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return d.properties.groupOne && nameAccessor(d) === 'Troms';})
-    }
-    var countyFeatureCollection4 = {
-      type: "FeatureCollection",
-      features: countyFeatures.filter(function(d) {return !d.properties.groupOne && nameAccessor(d) === 'Troms';})
-    }
+    var counts = buckets.map(function(d) {return d.count || 0});
+    var colorScale = d3.scale.linear().domain(d3.extent(counts.concat([0])));
+    var palette =  d3.interpolateLab("white", "black");
+
+    var layers = countyFeatures.map(function(d) {
+      var name = nameAccessor(d);
+      var bucketIndex = countyNames.indexOf(name);
+      var count = bucketIndex === -1 ? 0 : counts[bucketIndex];
+      return {
+        sourcetype: 'geojson',
+        source: d,
+        type: 'fill',
+        fill: {
+          outlinecolor: name === 'Troms' ? 'blue' : '#444'
+        },
+        color: palette(colorScale(count))
+      }
+    })
 
     Plotly.plot(
 
@@ -210,8 +209,8 @@ function render(cartesianContainer, piechartContainer, payload) {
       }],
 
       {
-        height: 500,
-        width: 510,
+        height: 600,
+        width: 612,
         margin: {t: 0},
         mapbox: {
           center: {
@@ -219,33 +218,8 @@ function render(cartesianContainer, piechartContainer, payload) {
             lon: 17.8
           },
           style: 'light',
-          zoom: 3.2,
-          layers: [
-            {
-              sourcetype: 'geojson',
-              source: countyFeatureCollection1,
-              type: 'fill',
-              color: 'grey'
-            },
-            {
-              sourcetype: 'geojson',
-              source: countyFeatureCollection2,
-              type: 'fill',
-              color: 'white'
-            },
-            {
-              sourcetype: 'geojson',
-              source: countyFeatureCollection3,
-              type: 'fill',
-              color: 'blue'
-            },
-            {
-              sourcetype: 'geojson',
-              source: countyFeatureCollection4,
-              type: 'fill',
-              color: 'lightblue'
-            }
-          ]
+          zoom: 3.5,
+          layers: layers
         }
       },
 
