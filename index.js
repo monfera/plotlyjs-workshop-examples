@@ -216,13 +216,13 @@ function geoLayout(geojson, buckets, selectedCounty) {
 }
 
 
-function renderBarchart(root, buckets, selectedCounty) {
+function renderBarchart(barRoot, pieRoot, buckets, selectedCounty) {
   Plotly.newPlot(
-    root,
+    barRoot,
     barData(buckets, selectedCounty),
     barLayout(buckets, selectedCounty)
   );
-  root.on('plotly_click', barClickEventHandlerMaker(root, buckets));
+  barRoot.on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
 function renderPiechart(root, buckets, selectedCounty) {
@@ -233,7 +233,7 @@ function renderPiechart(root, buckets, selectedCounty) {
   );
 }
 
-function renderGeo(geojson, root, buckets, selectedCounty) {
+function renderGeo(root, geojson, buckets, selectedCounty) {
   Plotly.newPlot(
     root,
     geoData(),
@@ -242,10 +242,11 @@ function renderGeo(geojson, root, buckets, selectedCounty) {
   );
 }
 
-function barClickEventHandlerMaker(root, buckets) {
+function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = d.points[0].x;
-    renderBarchart(root, buckets, county);
+    renderBarchart(barRoot, pieRoot, buckets, county);
+    renderPiechart(pieRoot, buckets, county);
   }
 }
 
@@ -253,12 +254,12 @@ function render(cartesianContainer, piechartContainer, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-  renderBarchart(cartesianContainer.node(), buckets, selectedCounty);
+  renderBarchart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
   renderPiechart(piechartContainer.node(), buckets, selectedCounty);
 
   if(false)
     Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
-      renderGeo(geojson, geoContainer.node(), buckets, selectedCounty);
+      renderGeo(geoContainer.node(), geojson, buckets, selectedCounty);
     });
 
   piechartContainer.select('svg')
