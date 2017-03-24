@@ -1,30 +1,24 @@
 /**
- * Example 05 - Custom choropleth with MapBox
+ * Example 06 - Events
  *
  * Summary:
- *   - mapbox
- *   - mapbox based choropleth
- *   - callback hell w/ multiple async inputs
- *   - GeoJSON
- *   - command line cartography by Mike Bostock
- *      - ndjson
- *      - joining carto features with data(?)
- *      - modifying properties
- *      - lowering resolution
- *      - TopoJSON payload or GeoJSON?
+ *   - hover on data glyph
+ *   - click, double click on data glyph
+ *   - lasso, rectangle select
+ *   - zoom, pan, home
+ *   - legend selection
  *
  *  Links:
- *    - Maps: https://plot.ly/javascript/#maps
- *    - Mapbox example: https://plot.ly/javascript/choropleth-maps/#choropleth-map-of-florida-counties-colored-by-political-party
- *    - Mapbox reference: https://plot.ly/javascript/reference/#scattermapbox
- *    - Command line cartography: https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c#.eo0p0c8nm
+ *    - Events: https://plot.ly/javascript/plotlyjs-events/
+ *    - Events examples: https://plot.ly/javascript/#chart-events
+ *    - Controls examples: https://plot.ly/javascript/#3d-charts
  */
 
 var d3 = Plotly.d3;
 
 var cartesianContainer = d3.select('body')
   .append('div')
-  //.style('float', 'left');
+  .style('float', 'left');
 
 var piechartContainer = d3.select('body')
   .append('div')
@@ -164,7 +158,7 @@ function render(cartesianContainer, piechartContainer, payload) {
 
     {
       height: 540,
-      width: 600,
+      width: 680,
 
       margin: {t: 0, l: 150},
 
@@ -175,6 +169,7 @@ function render(cartesianContainer, piechartContainer, payload) {
   piechartContainer.select('svg')
     .style('overflow', 'visible');
 
+  if(0)
   Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
 
     var countyNames = buckets.map(function(d) {return d.val;});
@@ -204,14 +199,14 @@ function render(cartesianContainer, piechartContainer, payload) {
 
       [{
         type: 'scattermapbox',
-        lat: [46],
-        lon: [-74]
+        lat: 46,
+        lon: -74
       }],
 
       {
         height: 600,
-        width: 612,
-        margin: {t: 0},
+        width: 612 - 80,
+        margin: {t: 0, l: 0},
         mapbox: {
           center: {
             lat: 65.35,
