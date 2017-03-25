@@ -3,6 +3,9 @@
  *
  * Summary:
  *   - restyle vs newPlot
+ *   - splitting render and update
+ *   - string vs object based restyle
+ *   - updating specific traces only
  *
  *  Links:
  *    - https://plot.ly/javascript/plotlyjs-function-reference/#plotlyrestyle
@@ -220,6 +223,16 @@ function renderBarchart(barRoot, pieRoot, buckets, selectedCounty) {
   barRoot.on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
+function updateBarchart(barRoot, buckets, selectedCounty) {
+  var data = barData(buckets, selectedCounty);
+  Plotly.restyle(
+    barRoot,
+    'marker.color',
+    data.slice(0, 2).map(function(d) {return d.marker.color;}),
+    [0, 1]
+  );
+}
+
 function renderPiechart(barRoot, pieRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     pieRoot,
@@ -254,7 +267,7 @@ function renderGeo(root, geojson, buckets, selectedCounty) {
 function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].x);
-    renderBarchart(barRoot, pieRoot, buckets, county);
+    updateBarchart(barRoot, buckets, county);
     updatePiechart(pieRoot, buckets, county);
   }
 }
@@ -262,7 +275,7 @@ function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
 function pieClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].label);
-    renderBarchart(barRoot, pieRoot, buckets, county);
+    updateBarchart(barRoot, buckets, county);
     updatePiechart(pieRoot, buckets, county);
   }
 }
