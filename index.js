@@ -1,17 +1,11 @@
 /**
- * Example 06 - Events
+ * Example 07 - Restyle
  *
  * Summary:
- *   - hover on data glyph
- *   - click, double click on data glyph
- *   - lasso, rectangle select
- *   - zoom, pan, home
- *   - legend selection
+ *   - restyle vs newPlot
  *
  *  Links:
- *    - Events: https://plot.ly/javascript/plotlyjs-events/
- *    - Events examples: https://plot.ly/javascript/#chart-events
- *    - Controls examples: https://plot.ly/javascript/#3d-charts
+ *    - https://plot.ly/javascript/plotlyjs-function-reference/#plotlyrestyle
  */
 
 var d3 = Plotly.d3;
@@ -235,6 +229,15 @@ function renderPiechart(barRoot, pieRoot, buckets, selectedCounty) {
   pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
+function updatePiechart(barRoot, pieRoot, buckets, selectedCounty) {
+  Plotly.newPlot(
+    pieRoot,
+    pieData(buckets, selectedCounty),
+    pieLayout()
+  );
+  pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, buckets));
+}
+
 function renderGeo(root, geojson, buckets, selectedCounty) {
   Plotly.newPlot(
     root,
@@ -248,7 +251,7 @@ function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].x);
     renderBarchart(barRoot, pieRoot, buckets, county);
-    renderPiechart(barRoot, pieRoot, buckets, county);
+    updatePiechart(barRoot, pieRoot, buckets, county);
   }
 }
 
@@ -256,7 +259,7 @@ function pieClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].label);
     renderBarchart(barRoot, pieRoot, buckets, county);
-    renderPiechart(barRoot, pieRoot, buckets, county);
+    updatePiechart(barRoot, pieRoot, buckets, county);
   }
 }
 
