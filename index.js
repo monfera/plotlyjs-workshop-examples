@@ -229,11 +229,16 @@ function renderPiechart(barRoot, pieRoot, buckets, selectedCounty) {
   pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
-function updatePiechart(barRoot, pieRoot, buckets, selectedCounty) {
+function updatePiechart(pieRoot, buckets, selectedCounty) {
   var data = pieData(buckets, selectedCounty);
   Plotly.restyle(
     pieRoot,
     {labels: data.map(function(d) {return d.labels;})}
+  );
+  Plotly.restyle(
+    pieRoot,
+    'marker.colors',
+    data.map(function(d) {return d.marker.colors;})
   );
 }
 
@@ -250,7 +255,7 @@ function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].x);
     renderBarchart(barRoot, pieRoot, buckets, county);
-    updatePiechart(barRoot, pieRoot, buckets, county);
+    updatePiechart(pieRoot, buckets, county);
   }
 }
 
@@ -258,7 +263,7 @@ function pieClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].label);
     renderBarchart(barRoot, pieRoot, buckets, county);
-    updatePiechart(barRoot, pieRoot, buckets, county);
+    updatePiechart(pieRoot, buckets, county);
   }
 }
 
