@@ -230,12 +230,11 @@ function renderPiechart(barRoot, pieRoot, buckets, selectedCounty) {
 }
 
 function updatePiechart(barRoot, pieRoot, buckets, selectedCounty) {
-  Plotly.newPlot(
+  var data = pieData(buckets, selectedCounty);
+  Plotly.restyle(
     pieRoot,
-    pieData(buckets, selectedCounty),
-    pieLayout()
+    {labels: data.map(function(d) {return d.labels;})}
   );
-  pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
 function renderGeo(root, geojson, buckets, selectedCounty) {
