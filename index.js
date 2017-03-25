@@ -84,6 +84,8 @@ function barData(buckets, selectedCounty) {
 
 function barLayout(buckets, selectedCounty) {
 
+  var cleanSelectedCounty = clear(selectedCounty);
+
   return {
     height: 450,
     width: 1200,
@@ -112,8 +114,8 @@ function barLayout(buckets, selectedCounty) {
 
     annotations: [
       {
-        x: '<em><b>' + selectedCounty.replace(/(<([^>]+)>)/ig, '') + '</b></em>',
-        y: buckets[buckets.map(dataNameAccessor).indexOf(selectedCounty)].count,// 5848,
+        x: emphasize(cleanSelectedCounty),
+        y: buckets[buckets.map(dataNameAccessor).indexOf(cleanSelectedCounty)].count,
         xref: 'x',
         yref: 'y',
         text: 'Currently selected',
@@ -134,7 +136,6 @@ function pieData(buckets, selectedCounty) {
   return [
     {
       type: 'pie',
-      name: 'Baseline',
 
       hole: gr,
       direction: 'clockwise',
@@ -143,8 +144,8 @@ function pieData(buckets, selectedCounty) {
 
       marker: {
         colors: buckets.map(function(d, i) {
-          var rgb = d3.rgb(palette(i));
-          rgb.a = 0.3;
+          var rgb = d.val === selectedCounty ? d3.rgb("blue") : d3.rgb(palette(i));
+          rgb.a = d.val === selectedCounty ? 0.4 : 0.3;
           return rgb;
         })
       },
@@ -225,12 +226,13 @@ function renderBarchart(barRoot, pieRoot, buckets, selectedCounty) {
   barRoot.on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
-function renderPiechart(root, buckets, selectedCounty) {
+function renderPiechart(barRoot, pieRoot, buckets, selectedCounty) {
   Plotly.newPlot(
-    root,
+    pieRoot,
     pieData(buckets, selectedCounty),
     pieLayout()
   );
+  pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, buckets));
 }
 
 function renderGeo(root, geojson, buckets, selectedCounty) {
@@ -244,9 +246,17 @@ function renderGeo(root, geojson, buckets, selectedCounty) {
 
 function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
-    var county = d.points[0].x;
+    var county = clear(d.points[0].x);
     renderBarchart(barRoot, pieRoot, buckets, county);
-    renderPiechart(pieRoot, buckets, county);
+    renderPiechart(barRoot, pieRoot, buckets, county);
+  }
+}
+
+function pieClickEventHandlerMaker(barRoot, pieRoot, buckets) {
+  return function (d) {
+    var county = clear(d.points[0].label);
+    renderBarchart(barRoot, pieRoot, buckets, county);
+    renderPiechart(barRoot, pieRoot, buckets, county);
   }
 }
 
@@ -255,7 +265,7 @@ function render(cartesianContainer, piechartContainer, payload) {
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
   renderBarchart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
-  renderPiechart(piechartContainer.node(), buckets, selectedCounty);
+  renderPiechart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
 
   if(false)
     Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
@@ -276,7 +286,12 @@ function geojsonNameAccessor(d) {return d.properties.name || d.properties.navn;}
 function dataNameAccessor(d) {return d.val;}
 function tickTextMaker(selectedCounty) {
   return function(d) {
-    return d.val === selectedCounty ? '<em><b>' + d.val + '</b></em>' : d.val;
+    return d.val === selectedCounty ? emphasize(d.val) : d.val;
   }
 }
-
+function emphasize(text) {
+  return '<em><b>' + text + '</b></em>';
+}
+function clear(text) {
+  return text.replace(/(<([^>]+)>)/ig, '');
+}
