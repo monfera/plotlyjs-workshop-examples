@@ -1,14 +1,10 @@
 /**
- * Example 07 - Restyle
+ * Example 08 - Simple choropleth
  *
  * Summary:
- *   - restyle vs newPlot
- *   - splitting render and update
- *   - string vs object based restyle
- *   - updating specific traces only
+ *   - simple choropleth with D3
+ *   - how to add a custom D3 widget
  *
- *  Links:
- *    - https://plot.ly/javascript/plotlyjs-function-reference/#plotlyrestyle
  */
 
 var d3 = Plotly.d3;
@@ -21,7 +17,7 @@ var piechartContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
-var geoContainer = d3.select('body')
+var mapContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
@@ -109,6 +105,7 @@ function barLayout(buckets, selectedCounty) {
 
     font: { family: 'Arial, sans-serif' },
 
+/*
     annotations: [
       {
         x: emphasize(cleanSelectedCounty),
@@ -124,6 +121,7 @@ function barLayout(buckets, selectedCounty) {
         ay: -40
       }
     ]
+*/
 
   };
 }
@@ -166,7 +164,7 @@ function pieLayout() {
   };
 }
 
-function geoData() {
+function mapData() {
   return [{
     type: 'scattermapbox',
     lat: 46,
@@ -174,7 +172,7 @@ function geoData() {
   }];
 }
 
-function geoLayout(geojson, buckets, selectedCounty) {
+function mapLayout(geojson, buckets, selectedCounty) {
 
   var countyNames = buckets.map(function(d) {return d.val;});
   var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(geojsonNameAccessor(d)) !== -1;});
@@ -225,6 +223,14 @@ function renderBarchart(barRoot, pieRoot, buckets, selectedCounty) {
 
 function updateBarchart(barRoot, buckets, selectedCounty) {
   var data = barData(buckets, selectedCounty);
+/*
+  var layout = barLayout(buckets, selectedCounty);
+  Plotly.relayout(
+    barRoot,
+    'annotations',
+    layout.annotations
+  );
+*/
   Plotly.restyle(
     barRoot,
     'marker.color',
@@ -255,11 +261,11 @@ function updatePiechart(pieRoot, buckets, selectedCounty) {
   );
 }
 
-function renderGeo(root, geojson, buckets, selectedCounty) {
+function renderMap(root, geojson, buckets, selectedCounty) {
   Plotly.newPlot(
     root,
-    geoData(),
-    geoLayout(geojson, buckets, selectedCounty),
+    mapData(),
+    mapLayout(geojson, buckets, selectedCounty),
     { mapboxAccessToken: 'pk.eyJ1IjoiY2hyaWRkeXAiLCJhIjoiRy1GV1FoNCJ9.yUPu7qwD_Eqf_gKNzDrrCQ' }
   );
 }
@@ -289,7 +295,7 @@ function render(cartesianContainer, piechartContainer, payload) {
 
   if(false)
     Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
-      renderGeo(geoContainer.node(), geojson, buckets, selectedCounty);
+      renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
     });
 
   piechartContainer.select('svg')
