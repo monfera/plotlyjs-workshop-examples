@@ -21,6 +21,10 @@ var mapContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
+var geoContainer = d3.select('body')
+  .append('div')
+  .style('float', 'left');
+
 var palette = d3.scale.category20();
 
 d3.json('/mocks/payload01.json', render.bind(null, cartesianContainer, piechartContainer));
@@ -270,6 +274,44 @@ function renderMap(root, geojson, buckets, selectedCounty) {
   );
 }
 
+function renderGeo(root, geojson, buckets, selectedCounty) {
+
+  var width = 450;
+  var height = 600;
+  var features = mapLayout(geojson, buckets, selectedCounty).mapbox.layers.map(function(d) {return d.source;});
+  var path = d3.geo.path().projection(d3.geo.mercator()
+    .center([17.8, 65.35])
+    .translate([width / 2, height / 2])
+    .scale(1000)
+  );
+
+  var svg = root.selectAll('svg').data([0]);
+  svg.enter().append('svg')
+    .attr('width', width)
+    .attr('height', height);
+
+  var geoLayer = svg.selectAll('.geoLayer').data([0]);
+  geoLayer.enter().append('g')
+    .classed('geoLayer', true);
+
+  var feature = geoLayer.selectAll('.feature')
+    .data(features, geojsonNameAccessor);
+
+  feature.enter().append('path')
+    .classed('.feature', true)
+    .attr('d', path)
+    .attr('id', function(d) {
+      return 'feature_' + geojsonNameAccessor(d);
+    })
+    .style('stroke-width', 2)
+    .style('stroke', function(d) {
+      return geojsonNameAccessor(d) === selectedCounty ? 'blue' : 'white'
+    })
+    .style('fill', function(d) {
+      return d3.rgb(160 + 95 * Math.random(), 160 + 95 * Math.random(), 160 + 95 * Math.random())
+    });
+}
+
 function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].x);
@@ -286,6 +328,8 @@ function pieClickEventHandlerMaker(barRoot, pieRoot, buckets) {
   }
 }
 
+
+
 function render(cartesianContainer, piechartContainer, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
@@ -293,10 +337,10 @@ function render(cartesianContainer, piechartContainer, payload) {
   renderBarchart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
   renderPiechart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
 
-  if(false)
-    Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
-      renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
-    });
+  Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
+    if(false) renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
+    renderGeo(geoContainer, geojson, buckets, selectedCounty);
+  });
 
   piechartContainer.select('svg')
     .style('overflow', 'visible');
