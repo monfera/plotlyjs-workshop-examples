@@ -4,7 +4,11 @@
  * Summary:
  *   - simple choropleth with D3
  *   - how to add a custom D3 widget
+ *   - d3.geo.projection
+ *   - D3 general update pattern
  *
+ * Links:
+ *   - General Update Pattern I, II, III by Mike Bostock
  */
 
 var d3 = Plotly.d3;
@@ -299,16 +303,18 @@ function renderGeo(root, geojson, buckets, selectedCounty) {
 
   feature.enter().append('path')
     .classed('.feature', true)
-    .attr('d', path)
     .attr('id', function(d) {
       return 'feature_' + geojsonNameAccessor(d);
     })
+    .attr('d', path)
     .style('stroke-width', 2)
-    .style('stroke', function(d) {
-      return geojsonNameAccessor(d) === selectedCounty ? 'blue' : 'white'
-    })
     .style('fill', function(d) {
       return d3.rgb(160 + 95 * Math.random(), 160 + 95 * Math.random(), 160 + 95 * Math.random())
+    });
+
+  feature
+    .style('stroke', function(d) {
+      return geojsonNameAccessor(d) === selectedCounty ? 'blue' : 'white'
     });
 }
 
