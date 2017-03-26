@@ -6,9 +6,11 @@
  *   - how to add a custom D3 widget
  *   - d3.geo.projection
  *   - D3 general update pattern
+ *   - topoJson
  *
  * Links:
  *   - General Update Pattern I, II, III by Mike Bostock
+ *   - http://blockbuilder.org/mbostock/8ca036b3505121279daf
  */
 
 var d3 = Plotly.d3;
@@ -220,13 +222,13 @@ function mapLayout(geojson, buckets, selectedCounty) {
 }
 
 
-function renderBarchart(barRoot, pieRoot, buckets, selectedCounty) {
+function renderBarchart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     barRoot,
     barData(buckets, selectedCounty),
     barLayout(buckets, selectedCounty)
   );
-  barRoot.on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, buckets));
+  barRoot.on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
 }
 
 function updateBarchart(barRoot, buckets, selectedCounty) {
@@ -247,13 +249,13 @@ function updateBarchart(barRoot, buckets, selectedCounty) {
   );
 }
 
-function renderPiechart(barRoot, pieRoot, buckets, selectedCounty) {
+function renderPiechart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     pieRoot,
     pieData(buckets, selectedCounty),
     pieLayout()
   );
-  pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, buckets));
+  pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
 }
 
 function updatePiechart(pieRoot, buckets, selectedCounty) {
@@ -278,7 +280,9 @@ function renderMap(root, geojson, buckets, selectedCounty) {
   );
 }
 
-function renderGeo(root, geojson, buckets, selectedCounty) {
+function ensureGeo(root, geojson, buckets, selectedCounty) {
+
+  if(!geojson) return;
 
   var width = 450;
   var height = 600;
@@ -318,19 +322,21 @@ function renderGeo(root, geojson, buckets, selectedCounty) {
     });
 }
 
-function barClickEventHandlerMaker(barRoot, pieRoot, buckets) {
+function barClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].x);
     updateBarchart(barRoot, buckets, county);
     updatePiechart(pieRoot, buckets, county);
+    ensureGeo(geoRoot, undefined, buckets, county);
   }
 }
 
-function pieClickEventHandlerMaker(barRoot, pieRoot, buckets) {
+function pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets) {
   return function (d) {
     var county = clear(d.points[0].label);
     updateBarchart(barRoot, buckets, county);
     updatePiechart(pieRoot, buckets, county);
+    ensureGeo(geoRoot, undefined, buckets, county);
   }
 }
 
@@ -340,12 +346,12 @@ function render(cartesianContainer, piechartContainer, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-  renderBarchart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
-  renderPiechart(cartesianContainer.node(), piechartContainer.node(), buckets, selectedCounty);
+  renderBarchart(cartesianContainer.node(), piechartContainer.node(), geoContainer, buckets, selectedCounty);
+  renderPiechart(cartesianContainer.node(), piechartContainer.node(), geoContainer, buckets, selectedCounty);
 
   Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
     if(false) renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
-    renderGeo(geoContainer, geojson, buckets, selectedCounty);
+    ensureGeo(geoContainer, geojson, buckets, selectedCounty);
   });
 
   piechartContainer.select('svg')
