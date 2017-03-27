@@ -221,7 +221,6 @@ function mapLayout(geojson, buckets, selectedCounty) {
   };
 }
 
-
 function renderBarchart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     barRoot,
