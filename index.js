@@ -256,11 +256,13 @@ function updateBarchart(barRoot, buckets, selectedCounty) {
 
 function renderPiechart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
   Plotly.newPlot(
-    pieRoot,
+    pieRoot.node(),
     pieData(buckets, selectedCounty),
     pieLayout()
   );
-  pieRoot.on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
+  pieRoot.node().on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot.node(), geoRoot, buckets));
+  piechartContainer.select('svg')
+    .style('overflow', 'visible');
 }
 
 function updatePiechart(pieRoot, buckets, selectedCounty) {
@@ -352,15 +354,12 @@ function render(cartesianContainer, piechartContainer, payload) {
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
   renderBarchart(cartesianContainer.node(), piechartContainer.node(), geoContainer, buckets, selectedCounty);
-  renderPiechart(cartesianContainer.node(), piechartContainer.node(), geoContainer, buckets, selectedCounty);
+  renderPiechart(cartesianContainer.node(), piechartContainer, geoContainer, buckets, selectedCounty);
 
   Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
     if(false) renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
     ensureGeo(geoContainer, geojson, buckets, selectedCounty);
   });
-
-  piechartContainer.select('svg')
-    .style('overflow', 'visible');
 
   // Dev / Debug only!!! Don't use in published code
   // make SVG leaf node elements easily selectable
