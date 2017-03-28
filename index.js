@@ -14,8 +14,8 @@
  */
 
 var d3 = Plotly.d3;
-var stream = flyd.stream;
-var combine = flyd.combine;
+var $ = flyd.stream;
+var _ = require('./lift.js');
 
 var cartesianContainer = d3.select('body')
   .append('div')
@@ -35,19 +35,32 @@ var geoContainer = d3.select('body')
 
 var palette = d3.scale.category20();
 
-var bucketPayload$ = stream();
+var bucketPayload$ = $();
+var geojsonPayload$ = $();
 
 d3.json('/mocks/payload01.json', bucketPayload$);
+d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], geojsonPayload$)
 
 var buckets$ = bucketPayload$.map(function(payload) {
   return payload.facets.potential_companies_per_state.buckets;
 });
 
-buckets$.map(render.bind(null, cartesianContainer, piechartContainer));
-
 var gr = 0.61803398875;
 
-var selectedCounty = 'Troms';
+var selectedCounty$ = $('Troms');
+
+_(function(buckets, selectedCounty) {
+  renderBarchart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
+})(buckets$, selectedCounty$);
+
+_(function(buckets, selectedCounty) {
+  renderPiechart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
+})(buckets$, selectedCounty$);
+
+_(function(buckets, geojson, selectedCounty) {
+  if(false) renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
+  ensureGeo(geoContainer, geojson, buckets, selectedCounty);
+})(buckets$, geojsonPayload$, selectedCounty$);
 
 function barData(buckets, selectedCounty) {
 
@@ -349,22 +362,6 @@ function pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets) {
     updatePiechart(pieRoot, buckets, county);
     ensureGeo(geoRoot, undefined, buckets, county);
   }
-}
-
-function render(cartesianContainer, piechartContainer, buckets) {
-
-  renderBarchart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
-  renderPiechart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
-
-  Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
-    if(false) renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
-    ensureGeo(geoContainer, geojson, buckets, selectedCounty);
-  });
-
-  // Dev / Debug only!!! Don't use in published code
-  // make SVG leaf node elements easily selectable
-  // Plotly.d3.selectAll('*').style('pointer-events', 'painted');
-  // Plotly.d3.selectAll('svg, g').style('pointer-events', 'none');
 }
 
 function baselineCount(d) {return d.count;}
