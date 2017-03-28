@@ -39,7 +39,11 @@ var bucketPayload$ = stream();
 
 d3.json('/mocks/payload01.json', bucketPayload$);
 
-bucketPayload$.map(render.bind(null, cartesianContainer, piechartContainer));
+var buckets$ = bucketPayload$.map(function(payload) {
+  return payload.facets.potential_companies_per_state.buckets;
+});
+
+buckets$.map(render.bind(null, cartesianContainer, piechartContainer));
 
 var gr = 0.61803398875;
 
@@ -347,11 +351,7 @@ function pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets) {
   }
 }
 
-
-
-function render(cartesianContainer, piechartContainer, payload) {
-
-  var buckets = payload.facets.potential_companies_per_state.buckets;
+function render(cartesianContainer, piechartContainer, buckets) {
 
   renderBarchart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
   renderPiechart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
