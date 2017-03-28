@@ -229,11 +229,11 @@ function mapLayout(geojson, buckets, selectedCounty) {
 
 function renderBarchart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
   Plotly.newPlot(
-    barRoot,
+    barRoot.node(),
     barData(buckets, selectedCounty),
     barLayout(buckets, selectedCounty)
   );
-  barRoot.on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
+  barRoot.node().on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
 }
 
 function updateBarchart(barRoot, buckets, selectedCounty) {
@@ -247,7 +247,7 @@ function updateBarchart(barRoot, buckets, selectedCounty) {
   );
 */
   Plotly.restyle(
-    barRoot,
+    barRoot.node(),
     'marker.color',
     data.slice(0, 2).map(function(d) {return d.marker.color;}),
     [0, 1]
@@ -260,7 +260,7 @@ function renderPiechart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
     pieData(buckets, selectedCounty),
     pieLayout()
   );
-  pieRoot.node().on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot.node(), geoRoot, buckets));
+  pieRoot.node().on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
   piechartContainer.select('svg')
     .style('overflow', 'visible');
 }
@@ -268,11 +268,11 @@ function renderPiechart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
 function updatePiechart(pieRoot, buckets, selectedCounty) {
   var data = pieData(buckets, selectedCounty);
   Plotly.restyle(
-    pieRoot,
+    pieRoot.node(),
     {labels: data.map(function(d) {return d.labels;})}
   );
   Plotly.restyle(
-    pieRoot,
+    pieRoot.node(),
     'marker.colors',
     data.map(function(d) {return d.marker.colors;})
   );
@@ -353,8 +353,8 @@ function render(cartesianContainer, piechartContainer, payload) {
 
   var buckets = payload.facets.potential_companies_per_state.buckets;
 
-  renderBarchart(cartesianContainer.node(), piechartContainer.node(), geoContainer, buckets, selectedCounty);
-  renderPiechart(cartesianContainer.node(), piechartContainer, geoContainer, buckets, selectedCounty);
+  renderBarchart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
+  renderPiechart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
 
   Plotly.d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], function(geojson) {
     if(false) renderMap(mapContainer.node(), geojson, buckets, selectedCounty);
