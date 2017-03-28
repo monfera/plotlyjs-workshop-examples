@@ -14,6 +14,8 @@
  */
 
 var d3 = Plotly.d3;
+var stream = flyd.stream;
+var combine = flyd.combine;
 
 var cartesianContainer = d3.select('body')
   .append('div')
@@ -33,7 +35,11 @@ var geoContainer = d3.select('body')
 
 var palette = d3.scale.category20();
 
-d3.json('/mocks/payload01.json', render.bind(null, cartesianContainer, piechartContainer));
+var bucketPayload$ = stream();
+
+d3.json('/mocks/payload01.json', bucketPayload$);
+
+bucketPayload$.map(render.bind(null, cartesianContainer, piechartContainer));
 
 var gr = 0.61803398875;
 
