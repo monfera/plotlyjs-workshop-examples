@@ -50,11 +50,11 @@ var gr = 0.61803398875;
 var selectedCounty$ = $('Troms');
 
 _(function(buckets, selectedCounty) {
-  renderBarchart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
+  renderBarchart(cartesianContainer, buckets, selectedCounty);
 })(buckets$, selectedCounty$);
 
 _(function(buckets, selectedCounty) {
-  renderPiechart(cartesianContainer, piechartContainer, geoContainer, buckets, selectedCounty);
+  renderPiechart(piechartContainer, buckets, selectedCounty);
 })(buckets$, selectedCounty$);
 
 _(function(buckets, geojson, selectedCounty) {
@@ -244,13 +244,13 @@ function mapLayout(geojson, buckets, selectedCounty) {
   };
 }
 
-function renderBarchart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
+function renderBarchart(barRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     barRoot.node(),
     barData(buckets, selectedCounty),
     barLayout(buckets, selectedCounty)
   );
-  barRoot.node().on('plotly_click', barClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
+  barRoot.node().on('plotly_click', barClickEventHandler);
 }
 
 function updateBarchart(barRoot, buckets, selectedCounty) {
@@ -271,13 +271,13 @@ function updateBarchart(barRoot, buckets, selectedCounty) {
   );
 }
 
-function renderPiechart(barRoot, pieRoot, geoRoot, buckets, selectedCounty) {
+function renderPiechart(pieRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     pieRoot.node(),
     pieData(buckets, selectedCounty),
     pieLayout()
   );
-  pieRoot.node().on('plotly_click', pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets));
+  pieRoot.node().on('plotly_click', pieClickEventHandler);
   piechartContainer.select('svg')
     .style('overflow', 'visible');
 }
@@ -338,7 +338,8 @@ function ensureGeo(root, geojson, buckets, selectedCounty) {
     .style('stroke-width', 2)
     .style('fill', function(d) {
       return d3.rgb(160 + 95 * Math.random(), 160 + 95 * Math.random(), 160 + 95 * Math.random())
-    });
+    })
+    .on('click', geoClickEventHandler);
 
   feature
     .style('stroke', function(d) {
@@ -346,22 +347,19 @@ function ensureGeo(root, geojson, buckets, selectedCounty) {
     });
 }
 
-function barClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets) {
-  return function (d) {
-    var county = clear(d.points[0].x);
-    updateBarchart(barRoot, buckets, county);
-    updatePiechart(pieRoot, buckets, county);
-    ensureGeo(geoRoot, undefined, buckets, county);
-  }
+function barClickEventHandler(d) {
+  var county = clear(d.points[0].x);
+  selectedCounty$(county);
 }
 
-function pieClickEventHandlerMaker(barRoot, pieRoot, geoRoot, buckets) {
-  return function (d) {
-    var county = clear(d.points[0].label);
-    updateBarchart(barRoot, buckets, county);
-    updatePiechart(pieRoot, buckets, county);
-    ensureGeo(geoRoot, undefined, buckets, county);
-  }
+function pieClickEventHandler(d) {
+  var county = clear(d.points[0].label);
+  selectedCounty$(county);
+}
+
+function geoClickEventHandler(d) {
+  var county = d.properties.name;
+  selectedCounty$(county);
 }
 
 function baselineCount(d) {return d.count;}
