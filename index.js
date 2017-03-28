@@ -49,9 +49,20 @@ var gr = 0.61803398875;
 
 var selectedCounty$ = $('Troms');
 
-_(function(buckets, selectedCounty) {
-  renderBarchart(cartesianContainer, buckets, selectedCounty);
-})(buckets$, selectedCounty$);
+(function() {
+  var prevBuckets, prevSelectedCounty;
+  _(function(buckets, selectedCounty) {
+    if(prevBuckets === buckets) {
+      console.log('updated barchart');
+      updateBarchart(cartesianContainer, buckets, selectedCounty);
+      prevSelectedCounty = selectedCounty;
+    } else {
+      console.log('rendered fresh barchart');
+      renderBarchart(cartesianContainer, buckets, selectedCounty);
+      prevBuckets = buckets;
+    }
+  })(buckets$, selectedCounty$);
+})();
 
 _(function(buckets, selectedCounty) {
   renderPiechart(piechartContainer, buckets, selectedCounty);
