@@ -1,0 +1,7 @@
+.feature {
+    stroke-width: 2
+}
+
+.feature.selected {
+    stroke: blue;
+}

@@ -280,6 +280,11 @@ function updateBarchart(barRoot, buckets, selectedCounty) {
     data.slice(0, 2).map(function(d) {return d.marker.color;}),
     [0, 1]
   );
+  Plotly.restyle(
+    barRoot.node(),
+    'x',
+    data.map(function(d) {return d.x;})
+  );
 }
 
 function renderPiechart(pieRoot, buckets, selectedCounty) {
@@ -341,21 +346,26 @@ function ensureGeo(root, geojson, buckets, selectedCounty) {
     .data(features, geojsonNameAccessor);
 
   feature.enter().append('path')
-    .classed('.feature', true)
-    .attr('id', function(d) {
-      return 'feature_' + geojsonNameAccessor(d);
-    })
+    .classed('feature', true)
+    .classed('selected', function(d) {return geojsonNameAccessor(d) === selectedCounty;})
     .attr('d', path)
-    .style('stroke-width', 2)
     .style('fill', function(d) {
       return d3.rgb(160 + 95 * Math.random(), 160 + 95 * Math.random(), 160 + 95 * Math.random())
     })
     .on('click', geoClickEventHandler);
 
+  geoLayer.selectAll('.feature.selected')
+    .classed('selected', false);
+
+/*
   feature
-    .style('stroke', function(d) {
-      return geojsonNameAccessor(d) === selectedCounty ? 'blue' : 'white'
-    });
+    .filter(function() {return this.classList.contains('selected');})
+    .classed('selected', false);
+*/
+
+  feature
+    .filter(function(d) {return geojsonNameAccessor(d) === selectedCounty;})
+    .classed('selected', true);
 }
 
 function barClickEventHandler(d) {
