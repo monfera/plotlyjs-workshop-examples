@@ -17,6 +17,13 @@ var d3 = Plotly.d3;
 var $ = flyd.stream;
 var _ = require('./lift.js');
 
+var reset = d3.select('body')
+  .attr('id', 'resetSelection')
+  .append('p')
+  .style('color', 'blue')
+  .text('Reset selection')
+  .on('click', resetEventHandler);
+
 var cartesianContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
@@ -47,17 +54,15 @@ var buckets$ = bucketPayload$.map(function(payload) {
 
 var gr = 0.61803398875;
 
-var selectedCounty$ = $('Troms');
+var selectedCounty$ = $(null);
 
 (function() {
   var prevBuckets, prevSelectedCounty;
   _(function(buckets, selectedCounty) {
     if(prevBuckets === buckets) {
-      console.log('updated barchart');
       updateBarchart(cartesianContainer, buckets, selectedCounty);
       prevSelectedCounty = selectedCounty;
     } else {
-      console.log('rendered fresh barchart');
       renderBarchart(cartesianContainer, buckets, selectedCounty);
       prevBuckets = buckets;
     }
@@ -119,9 +124,7 @@ function barData(buckets, selectedCounty) {
   ];
 }
 
-function barLayout(buckets, selectedCounty) {
-
-  var cleanSelectedCounty = clear(selectedCounty);
+function barLayout() {
 
   return {
     height: 450,
@@ -147,26 +150,7 @@ function barLayout(buckets, selectedCounty) {
     },
     yaxis: { title: 'Number of firms' },
 
-    font: { family: 'Arial, sans-serif' },
-
-/*
-    annotations: [
-      {
-        x: emphasize(cleanSelectedCounty),
-        y: buckets[buckets.map(dataNameAccessor).indexOf(cleanSelectedCounty)].count,
-        xref: 'x',
-        yref: 'y',
-        text: 'Currently selected',
-        arrowcolor: 'rgba(0, 0, 255, 0.4)',
-        arrowwidth: 1.5,
-        arrowhead: 5,
-        showarrow: true,
-        ax: 20,
-        ay: -40
-      }
-    ]
-*/
-
+    font: { family: 'Arial, sans-serif' }
   };
 }
 
@@ -259,7 +243,7 @@ function renderBarchart(barRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     barRoot.node(),
     barData(buckets, selectedCounty),
-    barLayout(buckets, selectedCounty)
+    barLayout()
   );
   barRoot.node().on('plotly_click', barClickEventHandler);
 }
@@ -267,7 +251,7 @@ function renderBarchart(barRoot, buckets, selectedCounty) {
 function updateBarchart(barRoot, buckets, selectedCounty) {
   var data = barData(buckets, selectedCounty);
 /*
-  var layout = barLayout(buckets, selectedCounty);
+  var layout = barLayout();
   Plotly.relayout(
     barRoot,
     'annotations',
@@ -368,19 +352,32 @@ function ensureGeo(root, geojson, buckets, selectedCounty) {
     .classed('selected', true);
 }
 
+function setSelectedCounty(county) {
+  if(selectedCounty$() !== county) {
+    selectedCounty$(county);
+  } else {
+    selectedCounty$(null);
+  }
+}
+
 function barClickEventHandler(d) {
   var county = clear(d.points[0].x);
-  selectedCounty$(county);
+  setSelectedCounty(county);
+}
+
+function resetEventHandler(d) {
+  var county = null;
+  setSelectedCounty(county);
 }
 
 function pieClickEventHandler(d) {
   var county = clear(d.points[0].label);
-  selectedCounty$(county);
+  setSelectedCounty(county);
 }
 
 function geoClickEventHandler(d) {
   var county = d.properties.name;
-  selectedCounty$(county);
+  setSelectedCounty(county);
 }
 
 function baselineCount(d) {return d.count;}
@@ -388,7 +385,7 @@ function geojsonNameAccessor(d) {return d.properties.name || d.properties.navn;}
 function dataNameAccessor(d) {return d.val;}
 function tickTextMaker(selectedCounty) {
   return function(d) {
-    return d.val === selectedCounty ? emphasize(d.val) : d.val;
+    return selectedCounty && d.val === selectedCounty ? emphasize(d.val) : d.val;
   }
 }
 function emphasize(text) {
