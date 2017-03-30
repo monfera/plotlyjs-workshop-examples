@@ -88,7 +88,7 @@ _(function(selectedCounty) {
   var queryString = [
     server,
     "/solr/bedrifter2/select?q=*&wt=json&rows=0&fq=leaf_node:1&fq=forradrfylkenavn_str:",
-    selectedCounty,
+    "\"", selectedCounty, "\"",
     "&fq={!parent which=path:1.virksomhet v=$larebedrift_fq}&larebedrift_fq=((vigo_sum_kontrakter:[1 TO *] ) OR {!parent which=path:2.virksomhet.forelder v='forelder_vigo_sum_kontrakter:[1 TO *] AND forelder_vigo_avstand:1'})&json.facet={firms_with_trainees_per_municipality : {type : terms,limit: 50,field: forradrkommnavn_str}}"
   ].join('');
   if(selectedCounty) {
