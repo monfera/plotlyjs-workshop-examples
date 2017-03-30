@@ -1,0 +1,20 @@
+fylker.geojson, communer.geojson
+
+http://www.kartverket.no/en/data/Terms-of-use/
+
+ority’s free products
+The Norwegian Mapping Authority’s open data are licensed under under Creative Commons Attribution 4.0 Internationel (CC BY 4.0).
+
+The data can be shared and adapted freely, also for commsersial purposes. The user must give appropriate credit according to CC BY 4.0, which includesusing ©Kartverket and a link to our homepage, www.kartverket.no, if possible.
+
+Some of the products are protected by copyrights, some have database protection, and some have expired.
+As stated in CC BY, these only include protected products, and the requirement of source reference is therefore only applicable if the product is protected, or if the name must be mentioned for other reasons (generally accepted business practice).
+
+For products with database protection, e.g. Sentralt stedsnavnregister, SSR (the Central
+Register of Place Name), use of the entire product, or essential parts of it must be marked with the correct source reference. This does not apply to the use of single parts of information. In the case of systematic use of single parts of information, the source must be stated by e.g.: “all place names are obtained from SSR ©Kartverket”, and a link to www.kartverket.no.
+
+Liability
+The Norwegian Mapping Authority’s free products are distributed as is. The Norwegian Mapping Authority is not liable for claims arising out of the use of the maps. Users are advised to use due diligence and consideration for equipment and terrain.
+
+Users must be aware that maps are not always consistent with the terrain, and any use must occur with due caution and consideration to equipment and physical conditions.
+
