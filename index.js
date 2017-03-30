@@ -21,16 +21,35 @@ var geoContainer = d3.select('body')
   .append('div')
   .style('float', 'left');
 
+var insetContainer1 = d3.select('body')
+  .append('div')
+  .style('position', 'absolute')
+  .style('width', '250px')
+  .style('height', '250px')
+  .style('background-color', 'rgba(0,0,0,0.05)');
+
+var insetContainer2 = d3.select('body')
+  .append('div')
+  .style('position', 'absolute')
+  .style('left', '400px')
+  .style('top', '340px')
+  .style('width', '400px')
+  .style('height', '580px')
+  .style('background-color', 'rgba(0,0,0,0.05)');
+
 var reset = d3.select('body')
   .attr('id', 'resetSelection')
   .append('p')
   .style('color', 'blue')
   .style('cursor', 'pointer')
+  .style('font-size', 'small')
   .text('Reset selection')
   .on('click', resetEventHandler);
 
 var cartesianContainer = d3.select('body')
   .append('div')
+  .style('position', 'relative')
+  .style('top', '-20px')
   .style('float', 'left');
 
 var piechartContainer = d3.select('body')
@@ -121,8 +140,10 @@ function barData(buckets, selectedCounty) {
 function barLayout() {
 
   return {
-    height: 450,
-    width: 1200,
+    height: 400,
+    width: 800,
+
+    //margin: {t: 40},
 
     title: '<b>Candidate firms for traineeships in the electrician profession by county</b>',
     titlefont: {
@@ -177,10 +198,10 @@ function pieData(buckets, selectedCounty) {
 function pieLayout() {
 
   return {
-    height: 540,
+    height: 490,
     width: 680,
 
-    margin: {t: 0, l: 150},
+    margin: {t: 20, l: 150, b: 0},
 
     font: { family: 'Arial, sans-serif' }
   };
@@ -256,11 +277,11 @@ function updatePiechart(pieRoot, buckets, selectedCounty) {
 function ensureGeo(root, geojson, buckets, selectedCounty) {
 
   var width = 800;
-  var height = 940;
+  var height = 920;
   var path = d3.geo.path().projection(d3.geo.mercator()
     .center([17.8, 65.35])
     .translate([width / 2, height / 2])
-    .scale(1700)
+    .scale(1600)
   );
 
   var svg = root.selectAll('svg').data([0]);
