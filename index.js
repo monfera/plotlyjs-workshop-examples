@@ -59,19 +59,43 @@ var piechartContainer = d3.select('body')
 
 var palette = d3.scale.category20();
 
-var bucketPayload$ = $();
+var perCountyBucketPayload$ = $();
+var perMunicipalityBucketPayload$ = $();
 var geojsonPayload$ = $(null);
 
-d3.json('/mocks/payload01.json', bucketPayload$);
+d3.json('/mocks/payload01.json', perCountyBucketPayload$);
 d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], geojsonPayload$)
 
-var buckets$ = bucketPayload$.map(function(payload) {
+var perCountyBuckets$ = perCountyBucketPayload$.map(function(payload) {
   return payload.facets.potential_companies_per_state.buckets;
+});
+
+var perMunicipalityBuckets$ = perMunicipalityBucketPayload$.map(function(payload) {
+  var result = payload ? payload.facets.firms_with_trainees_per_municipality.buckets : null;
+  return result;
 });
 
 var gr = 0.61803398875;
 
 var selectedCounty$ = $(null);
+
+_(function(selectedCounty) {
+  console.log('fetching muni counts for county ', selectedCounty);
+  var queryString = [
+    "http://dev.remim.com:8983/solr/bedrifter2/select?q=*&wt=json&rows=0&fq=leaf_node:1&fq=forradrfylkenavn_str:",
+    selectedCounty,
+    "&fq={!parent which=path:1.virksomhet v=$larebedrift_fq}&larebedrift_fq=((vigo_sum_kontrakter:[1 TO *] ) OR {!parent which=path:2.virksomhet.forelder v='forelder_vigo_sum_kontrakter:[1 TO *] AND forelder_vigo_avstand:1'})&json.facet={firms_with_trainees_per_municipality : {type : terms,limit: 50,field: forradrkommnavn_str}}"
+  ].join('');
+  if(selectedCounty) {
+    d3.json(queryString, perMunicipalityBucketPayload$);
+  } else {
+    perMunicipalityBucketPayload$(null);
+  }
+})(selectedCounty$);
+
+_(function(buckets) {
+  console.log(buckets);
+})(perMunicipalityBuckets$);
 
 (function() {
   var prevBuckets;
@@ -84,12 +108,12 @@ var selectedCounty$ = $(null);
       renderPiechart(piechartContainer, buckets, selectedCounty);
       prevBuckets = buckets;
     }
-  })(buckets$, selectedCounty$);
+  })(perCountyBuckets$, selectedCounty$);
 })();
 
 _(function(buckets, geojson, selectedCounty) {
   ensureGeo(geoContainer, geojson, buckets, selectedCounty);
-})(buckets$, geojsonPayload$, selectedCounty$);
+})(perCountyBuckets$, geojsonPayload$, selectedCounty$);
 
 function barData(buckets, selectedCounty) {
 
