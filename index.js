@@ -65,7 +65,7 @@ var perMunicipalityBucketPayload$ = $();
 var geojsonPayload$ = $(null);
 
 d3.json('/mocks/payload01.json', perCountyBucketPayload$);
-d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json'][1], geojsonPayload$)
+d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json', 'mocks/fylker.geojson'][2], geojsonPayload$)
 
 var perCountyBuckets$ = perCountyBucketPayload$.map(function(payload) {
   return payload.facets.potential_companies_per_state.buckets;
@@ -81,7 +81,6 @@ var gr = 0.61803398875;
 var selectedCounty$ = $(null);
 
 _(function(selectedCounty) {
-  console.log('fetching muni counts for county ', selectedCounty);
   var queryString = [
     server,
     "/solr/bedrifter2/select?q=*&wt=json&rows=0&fq=leaf_node:1&fq=forradrfylkenavn_str:",
@@ -94,10 +93,6 @@ _(function(selectedCounty) {
     perMunicipalityBucketPayload$(null);
   }
 })(selectedCounty$);
-
-_(function(buckets) {
-  console.log(buckets);
-})(perMunicipalityBuckets$);
 
 (function() {
   var prevBuckets;
@@ -290,6 +285,8 @@ function pieLayout() {
   };
 }
 
+// fylkesnr komm
+
 function geoFeatures(geojson, buckets) {
 
   var countyNames = buckets.map(function(d) {return d.val;});
@@ -302,7 +299,7 @@ function geoFeatures(geojson, buckets) {
     var name = geojsonNameAccessor(d);
     var bucketIndex = countyNames.indexOf(name);
     d.properties.count = bucketIndex === -1 ? 0 : counts[bucketIndex];
-    d.properties.color = palette(colorScale(d.properties.count))
+    d.properties.color = palette(colorScale(d.properties.count));
     return d;
   });
 
