@@ -290,7 +290,7 @@ function pieLayout() {
   };
 }
 
-function geoFeatures(geojson, buckets, selectedCounty) {
+function geoFeatures(geojson, buckets) {
 
   var countyNames = buckets.map(function(d) {return d.val;});
   var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(geojsonNameAccessor(d)) !== -1;});
@@ -393,7 +393,7 @@ function ensureGeo(root, geojson, buckets, selectedCounty) {
     return;
   }
 
-  var features = geoFeatures(geojson, buckets, selectedCounty);
+  var features = geoFeatures(geojson, buckets);
   var feature = geoLayer.selectAll('.feature')
     .data(features, geojsonNameAccessor);
 
