@@ -108,9 +108,13 @@ _(function(selectedCounty) {
   })(perCountyBuckets$, selectedCounty$);
 })();
 
-_(function(buckets, geojson, selectedCounty) {
-  ensureGeo(geoContainer, geojson, buckets, selectedCounty);
-})(perCountyBuckets$, geojsonPayload$, selectedCounty$);
+var perCountyFeatures$ = _(function(geojson, buckets) {
+  return geoFeatures(geojson, buckets);
+})(geojsonPayload$, perCountyBuckets$);
+
+_(function(features, selectedCounty) {
+  ensureGeo(geoContainer, features, selectedCounty);
+})(perCountyFeatures$, selectedCounty$);
 
 (function() {
   var prevBuckets;
@@ -289,6 +293,10 @@ function pieLayout() {
 
 function geoFeatures(geojson, buckets) {
 
+  if(!geojson) {
+    return [];
+  }
+
   var countyNames = buckets.map(function(d) {return d.val;});
   var countyFeatures = geojson.features.filter(function(d) {return countyNames.indexOf(geojsonNameAccessor(d)) !== -1;});
   var counts = buckets.map(function(d) {return d.count || 0});
@@ -367,7 +375,7 @@ function updatePiechart(pieRoot, buckets, selectedCounty) {
   );
 }
 
-function ensureGeo(root, geojson, buckets, selectedCounty) {
+function ensureGeo(root, features, selectedCounty) {
 
   var width = 800;
   var height = 920;
@@ -386,11 +394,6 @@ function ensureGeo(root, geojson, buckets, selectedCounty) {
   geoLayer.enter().append('g')
     .classed('geoLayer', true);
 
-  if(!geojson) {
-    return;
-  }
-
-  var features = geoFeatures(geojson, buckets);
   var feature = geoLayer.selectAll('.feature')
     .data(features, geojsonNameAccessor);
 
