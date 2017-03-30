@@ -16,6 +16,7 @@
 var d3 = Plotly.d3;
 var $ = flyd.stream;
 var _ = require('./lift.js');
+var server = require('./server.js')
 
 var geoContainer = d3.select('body')
   .append('div')
@@ -24,9 +25,9 @@ var geoContainer = d3.select('body')
 var insetContainer1 = d3.select('body')
   .append('div')
   .style('position', 'absolute')
-  .style('width', '250px')
-  .style('height', '250px')
-  .style('background-color', 'rgba(0,0,0,0.05)');
+  .style('width', '200px')
+  //.style('background-color', 'rgba(0,0,0,0.05)')
+  .style('height', '500px');
 
 var insetContainer2 = d3.select('body')
   .append('div')
@@ -82,7 +83,8 @@ var selectedCounty$ = $(null);
 _(function(selectedCounty) {
   console.log('fetching muni counts for county ', selectedCounty);
   var queryString = [
-    "http://dev.remim.com:8983/solr/bedrifter2/select?q=*&wt=json&rows=0&fq=leaf_node:1&fq=forradrfylkenavn_str:",
+    server,
+    "/solr/bedrifter2/select?q=*&wt=json&rows=0&fq=leaf_node:1&fq=forradrfylkenavn_str:",
     selectedCounty,
     "&fq={!parent which=path:1.virksomhet v=$larebedrift_fq}&larebedrift_fq=((vigo_sum_kontrakter:[1 TO *] ) OR {!parent which=path:2.virksomhet.forelder v='forelder_vigo_sum_kontrakter:[1 TO *] AND forelder_vigo_avstand:1'})&json.facet={firms_with_trainees_per_municipality : {type : terms,limit: 50,field: forradrkommnavn_str}}"
   ].join('');
@@ -101,10 +103,10 @@ _(function(buckets) {
   var prevBuckets;
   _(function(buckets, selectedCounty) {
     if(prevBuckets === buckets) {
-      updateBarchart(cartesianContainer, buckets, selectedCounty);
+      updatePerCountyBarchart(cartesianContainer, buckets, selectedCounty);
       updatePiechart(piechartContainer, buckets, selectedCounty);
     } else {
-      renderBarchart(cartesianContainer, buckets, selectedCounty);
+      renderPerCountyBarchart(cartesianContainer, buckets, selectedCounty);
       renderPiechart(piechartContainer, buckets, selectedCounty);
       prevBuckets = buckets;
     }
@@ -115,7 +117,20 @@ _(function(buckets, geojson, selectedCounty) {
   ensureGeo(geoContainer, geojson, buckets, selectedCounty);
 })(perCountyBuckets$, geojsonPayload$, selectedCounty$);
 
-function barData(buckets, selectedCounty) {
+(function() {
+  var prevBuckets;
+  _(function(buckets, selectedCounty) {
+    if(prevBuckets === buckets) {
+      renderPerMunicipalityBarchart(insetContainer1, buckets, selectedCounty);
+    } else {
+      renderPerMunicipalityBarchart(insetContainer1, buckets, selectedCounty);
+      prevBuckets = buckets;
+    }
+  })(perMunicipalityBuckets$, selectedCounty$);
+})();
+
+
+function perCountyBarData(buckets, selectedCounty) {
 
   var tickText = tickTextMaker(selectedCounty);
 
@@ -161,7 +176,7 @@ function barData(buckets, selectedCounty) {
   ];
 }
 
-function barLayout() {
+function perCountyBarLayout() {
 
   return {
     height: 400,
@@ -188,6 +203,50 @@ function barLayout() {
       domain: [0, 1]
     },
     yaxis: { title: 'Number of firms' },
+
+    font: { family: 'Arial, sans-serif' }
+  };
+}
+
+function perMunicipalityBarData(inputBuckets) {
+
+  var buckets = inputBuckets.slice().sort(function(a, b) {return a.count - b.count;});
+  var tickText = function(d) {
+    var text = d.val;
+    return text.charAt(0) + text.slice(1).toLowerCase();
+  };
+
+  return [
+    {
+      type: 'bar',
+      width: gr,
+      orientation: 'h',
+
+      x: buckets.map(baselineCount),
+      y: buckets.map(tickText)
+    }
+  ];
+}
+
+function perMunicipalityBarLayout(selectedCounty) {
+
+  return {
+    height: 500,
+    width: 200,
+
+    margin: {t: 40, r: 10, b: 40, l: 100},
+
+    title: selectedCounty,
+    titlefont: {
+      family: 'Times New Roman, serif',
+      size: 16
+    },
+
+    showlegend: false,
+
+    xaxis: {
+      domain: [0, 1]
+    },
 
     font: { family: 'Arial, sans-serif' }
   };
@@ -250,17 +309,17 @@ function geoFeatures(geojson, buckets, selectedCounty) {
   return features;
 }
 
-function renderBarchart(barRoot, buckets, selectedCounty) {
+function renderPerCountyBarchart(barRoot, buckets, selectedCounty) {
   Plotly.newPlot(
     barRoot.node(),
-    barData(buckets, selectedCounty),
-    barLayout()
+    perCountyBarData(buckets, selectedCounty),
+    perCountyBarLayout()
   );
   barRoot.node().on('plotly_click', barClickEventHandler);
 }
 
-function updateBarchart(barRoot, buckets, selectedCounty) {
-  var data = barData(buckets, selectedCounty);
+function updatePerCountyBarchart(barRoot, buckets, selectedCounty) {
+  var data = perCountyBarData(buckets, selectedCounty);
   Plotly.restyle(
     barRoot.node(),
     'marker.color',
@@ -272,6 +331,19 @@ function updateBarchart(barRoot, buckets, selectedCounty) {
     'x',
     data.map(function(d) {return d.x;})
   );
+}
+
+function renderPerMunicipalityBarchart(barRoot, buckets, selectedCounty) {
+  if(buckets === null) {
+    Plotly.purge(barRoot.node());
+  } else {
+    Plotly.newPlot(
+      barRoot.node(),
+      perMunicipalityBarData(buckets),
+      perMunicipalityBarLayout(selectedCounty),
+      {displayModeBar: false}
+    );
+  }
 }
 
 function renderPiechart(pieRoot, buckets, selectedCounty) {
