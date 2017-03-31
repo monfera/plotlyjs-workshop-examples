@@ -345,7 +345,7 @@ function updatePerCountyBarchart(barRoot, buckets, selectedCounty) {
 }
 
 function renderPerMunicipalityBarchart(barRoot, buckets, selectedCounty) {
-  if(buckets === null) {
+  if(buckets === null || selectedCounty === null) {
     Plotly.purge(barRoot.node());
   } else {
     Plotly.newPlot(
