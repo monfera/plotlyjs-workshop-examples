@@ -51,9 +51,9 @@ var palette = d3.scale.category20();
 
 var perCountyBucketPayload$ = $();
 var perMunicipalityBucketPayload$ = $();
-var perCountyGeojsonPayload$ = $(null);
-var municipalityFeaturesForCounty$ = $([]);
-var perMunicipalityGeojsonPayload$ = $(null);
+var perCountyGeojsonPayload$ = $();
+var municipalityFeaturesForCounty$ = $();
+var perMunicipalityGeojsonPayload$ = $();
 
 d3.json('/mocks/perCountyCounts.json', perCountyBucketPayload$);
 d3.json('mocks/fylker.geojson', perCountyGeojsonPayload$);
@@ -68,14 +68,13 @@ var perMunicipalityBuckets$ = perMunicipalityBucketPayload$.map(function(payload
   return result;
 });
 
-var gr = 0.61803398875;
+var goldenRatio = 0.61803398875;
 
-var selectedCounty$ = $(null);
+var selectedCounty$ = $('Troms');
 
 _(function(selectedCounty) {
-  var queryString = './mocks/perMunicipalityCounts/' + selectedCounty + '.json';
   if(selectedCounty) {
-    d3.json(queryString, perMunicipalityBucketPayload$);
+    d3.json('./mocks/perMunicipalityCounts/' + selectedCounty + '.json', perMunicipalityBucketPayload$);
   } else {
     perMunicipalityBucketPayload$(null);
   }
@@ -150,7 +149,7 @@ function perCountyBarData(buckets, selectedCounty) {
     {
       type: 'bar',
       name: 'Baseline',
-      width: 0.45 * gr,
+      width: 0.45 * goldenRatio,
 
       marker: {color: buckets.map(function(d) {
         return d.val === selectedCounty ? 'rgba(0, 0, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)';
@@ -162,7 +161,7 @@ function perCountyBarData(buckets, selectedCounty) {
     {
       type: 'bar',
       name: 'Current',
-      width: 0.45 * gr,
+      width: 0.45 * goldenRatio,
 
       marker: {color: buckets.map(function(d) {
         return d.val === selectedCounty ? 'rgba(0, 0, 255, 0.9)' : 'rgba(0, 0, 0, 0.7)';
@@ -231,7 +230,7 @@ function perMunicipalityBarData(inputBuckets) {
   return [
     {
       type: 'bar',
-      width: gr,
+      width: goldenRatio,
       orientation: 'h',
 
       x: buckets.map(baselineCount),
@@ -270,7 +269,7 @@ function pieData(buckets, selectedCounty) {
     {
       type: 'pie',
 
-      hole: gr,
+      hole: goldenRatio,
       direction: 'clockwise',
 
       textinfo: 'label',
@@ -430,7 +429,10 @@ function ensureGeo(root, features, selectedCounty) {
     })
     .on('click', geoClickEventHandler);
 
-  feature.exit().remove();
+  feature.exit()
+    .transition()
+    .style('opacity', 0)
+    .remove();
 
   geoLayer.selectAll('.feature.selected')
     .classed('selected', false);
