@@ -427,10 +427,13 @@ function ensureGeo(root, features, selectedCounty) {
     .style('fill', function(d) {
       return d.properties.color;
     })
-    .on('click', geoClickEventHandler);
+    .on('click', geoClickEventHandler)
+    .style('opacity', 0)
+    .transition().delay(500).duration(500)
+    .style('opacity', 1);
 
   feature.exit()
-    .transition()
+    .transition().duration(500)
     .style('opacity', 0)
     .remove();
 
