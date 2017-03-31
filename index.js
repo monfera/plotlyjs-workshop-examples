@@ -1,41 +1,29 @@
-/**
- * Example 08 - Simple choropleth
- *
- * Summary:
- *   - simple choropleth with D3
- *   - how to add a custom D3 widget
- *   - d3.geo.projection
- *   - D3 general update pattern
- *   - topoJson
- *
- * Links:
- *   - General Update Pattern I, II, III by Mike Bostock
- *   - http://blockbuilder.org/mbostock/8ca036b3505121279daf
- */
-
 var d3 = Plotly.d3;
 var $ = flyd.stream;
 var _ = require('./lift.js');
-var server = require('./server.js')
 
 var countyGeoContainer = d3.select('body')
   .append('div')
   .style('width', '800px')
+  .style('background-color', 'rgba(0,0,0,0.05)')
   .style('height', '920px')
   .style('float', 'left');
 
 var muniCartesianContainer = d3.select('body')
   .append('div')
   .style('position', 'absolute')
+  .style('border', '1px solid grey')
+  .style('left', '2px')
   .style('width', '200px')
   .style('height', '450px');
 
 var muniGeoContainer = d3.select('body')
   .append('div')
   .style('position', 'absolute')
-  .style('left', '400px')
-  .style('top', '340px')
-  //.style('background-color', 'rgba(0,0,0,0.05)')
+  .style('left', '396px')
+  .style('top', '355px')
+  .style('border', '1px solid grey')
+  .style('background-color', 'rgba(213,223,255,1)')
   .style('width', '400px')
   .style('height', '580px');
 
@@ -67,8 +55,8 @@ var perCountyGeojsonPayload$ = $(null);
 var municipalityFeaturesForCounty$ = $([]);
 var perMunicipalityGeojsonPayload$ = $(null);
 
-d3.json('/mocks/payload01.json', perCountyBucketPayload$);
-d3.json(['mocks/norwayCountiesOriginal.json', 'mocks/norwayMunicipalities.json', 'mocks/fylker.geojson'][2], perCountyGeojsonPayload$);
+d3.json('/mocks/perCountyCounts.json', perCountyBucketPayload$);
+d3.json('mocks/fylker.geojson', perCountyGeojsonPayload$);
 d3.json('mocks/kommuner.geojson', perMunicipalityGeojsonPayload$);
 
 var perCountyBuckets$ = perCountyBucketPayload$.map(function(payload) {
@@ -85,12 +73,7 @@ var gr = 0.61803398875;
 var selectedCounty$ = $(null);
 
 _(function(selectedCounty) {
-  var queryString = [
-    server,
-    "/solr/bedrifter2/select?q=*&wt=json&rows=0&fq=leaf_node:1&fq=forradrfylkenavn_str:",
-    "\"", selectedCounty, "\"",
-    "&fq={!parent which=path:1.virksomhet v=$larebedrift_fq}&larebedrift_fq=((vigo_sum_kontrakter:[1 TO *] ) OR {!parent which=path:2.virksomhet.forelder v='forelder_vigo_sum_kontrakter:[1 TO *] AND forelder_vigo_avstand:1'})&json.facet={firms_with_trainees_per_municipality : {type : terms,limit: 50,field: forradrkommnavn_str}}"
-  ].join('');
+  var queryString = './mocks/perMunicipalityCounts/' + selectedCounty + '.json';
   if(selectedCounty) {
     d3.json(queryString, perMunicipalityBucketPayload$);
   } else {
@@ -132,11 +115,6 @@ _(function(perCountyFeatures, municipalityPayload, selectedCounty) {
       .filter(function(f) {
         return ('0' + f.properties.komm.toString()).slice(-4).slice(0, 2) === ('0' + id.toString()).slice(-2);
       });
-    /*
-     features.forEach(function(f) {
-     f.properties.count =
-     })
-     */
     municipalityFeaturesForCounty$(features);
   } else {
     municipalityFeaturesForCounty$([]);
@@ -270,7 +248,7 @@ function perMunicipalityBarLayout(selectedCounty) {
 
     margin: {t: 40, r: 10, b: 40, l: 100},
 
-    title: selectedCounty,
+    title: '<b>' + selectedCounty + '</b>',
     titlefont: {
       family: 'Times New Roman, serif',
       size: 16
@@ -406,8 +384,8 @@ function updatePiechart(pieRoot, buckets, selectedCounty) {
 
 function ensureGeo(root, features, selectedCounty) {
 
-  var width = parseInt(root.style('width').slice(-Infinity, -2));
-  var height = parseInt(root.style('height').slice(-Infinity, -2));
+  var width = parseInt(root.style('width'));
+  var height = parseInt(root.style('height'));
 
   var featureCollection = {
     type: 'FeatureCollection',
@@ -421,14 +399,14 @@ function ensureGeo(root, features, selectedCounty) {
   var boxHeight = bbox[1][1] - bbox[0][1];
   var centerX = (bbox[0][0] + bbox[1][0]) / 2;
   var centerY = (bbox[0][1] + bbox[1][1]) / 2;
-  var scale = 0.8 / Math.max(boxWidth / width, boxHeight / 920);
+  var scale = 48 * 0.8 / Math.max(boxWidth / width, boxHeight / height);
 
   if(valid) {
     var path = d3.geo.path()
       .projection(d3.geo.mercator()
           .center([centerX, centerY])
           .translate([width / 2, height / 2])
-          .scale(60 * scale)
+          .scale(scale)
       );
   }
   var svg = root.selectAll('svg').data([0]);
