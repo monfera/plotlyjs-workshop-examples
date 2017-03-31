@@ -3,9 +3,9 @@ body {
 }
 
 .feature {
-    stroke-width: 2
+    stroke-width: 2px
 }
 
 .feature.selected {
-    stroke: #6699ff;
+    stroke: blue;
 }
