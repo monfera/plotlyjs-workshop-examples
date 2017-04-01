@@ -2,10 +2,6 @@ body {
     margin: 0;
 }
 
-.feature {
-    stroke-width: 2px
-}
-
 .feature.selected {
     stroke: blue;
 }

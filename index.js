@@ -14,17 +14,17 @@ var muniCartesianContainer = d3.select('body')
   .style('position', 'absolute')
   .style('border', '1px solid grey')
   .style('left', '2px')
-  .style('width', '200px')
+  .style('width', '250px')
   .style('height', '450px');
 
 var muniGeoContainer = d3.select('body')
   .append('div')
   .style('position', 'absolute')
-  .style('left', '396px')
+  .style('left', '446px')
   .style('top', '355px')
   .style('border', '1px solid grey')
   .style('background-color', 'rgba(213,223,255,1)')
-  .style('width', '400px')
+  .style('width', '350px')
   .style('height', '580px');
 
 var reset = d3.select('body')
@@ -243,7 +243,7 @@ function perMunicipalityBarLayout(selectedCounty) {
 
   return {
     height: 450,
-    width: 200,
+    width: 250,
 
     margin: {t: 40, r: 10, b: 40, l: 100},
 
@@ -393,21 +393,29 @@ function ensureGeo(root, features, selectedCounty) {
 
   var valid = features.length > 0;
   var bbox = d3.geo.bounds(featureCollection);
-
-  var boxWidth = bbox[1][0] - bbox[0][0];
-  var boxHeight = bbox[1][1] - bbox[0][1];
   var centerX = (bbox[0][0] + bbox[1][0]) / 2;
   var centerY = (bbox[0][1] + bbox[1][1]) / 2;
-  var scale = 48 * 0.8 / Math.max(boxWidth / width, boxHeight / height);
+
 
   if(valid) {
     var path = d3.geo.path()
-      .projection(d3.geo.mercator()
-          .center([centerX, centerY])
-          .translate([width / 2, height / 2])
-          .scale(scale)
+      .projection(d3.geo.conicEqualArea()
+        .translate([width / 2, height / 2])
+        .parallels([bbox[0][1], bbox[1][1]])
+        .center([centerX, centerY])
       );
+
+    var pbbox = path.bounds(featureCollection);
+    var boxWidth = pbbox[1][0] - pbbox[0][0];
+    var boxHeight = pbbox[1][1] - pbbox[0][1];
+    var pcenterX = (pbbox[0][0] + pbbox[1][0]) / 2;
+    var pcenterY = (pbbox[0][1] + pbbox[1][1]) / 2;
+
+    var scale = 1 / Math.max(boxWidth / width, boxHeight / height);
+    var translate = [width / 2 - scale * pcenterX, height / 2 - scale * pcenterY];
+
   }
+
   var svg = root.selectAll('svg').data([0]);
   svg.enter().append('svg')
     .attr('width', width)
@@ -423,6 +431,8 @@ function ensureGeo(root, features, selectedCounty) {
   feature.enter().append('path')
     .classed('feature', true)
     .classed('selected', function(d) {return geojsonNameAccessor(d) === selectedCounty;})
+    .attr('transform', 'translate(' + translate + ')scale(' + scale + ')')
+    .style('stroke-width', (2 / scale) + "px")
     .attr('d', path)
     .style('fill', function(d) {
       return d.properties.color;
