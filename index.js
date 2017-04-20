@@ -60,11 +60,11 @@ d3.json('mocks/fylker.geojson', perCountyGeojsonPayload$);
 d3.json('mocks/kommuner.geojson', perMunicipalityGeojsonPayload$);
 
 var perCountyBuckets$ = perCountyBucketPayload$.map(function(payload) {
-  return payload.facets.potential_companies_per_state.buckets;
+  return payload.facets.events_per_state.buckets;
 });
 
 var perMunicipalityBuckets$ = perMunicipalityBucketPayload$.map(function(payload) {
-  var result = payload ? payload.facets.firms_with_trainees_per_municipality.buckets : null;
+  var result = payload ? payload.facets.count_per_municipality.buckets : null;
   return result;
 });
 
@@ -195,7 +195,7 @@ function perCountyBarLayout() {
 
     //margin: {t: 40},
 
-    title: '<b>Candidate firms for traineeships in the electrician profession by county</b>',
+    title: '<b>Epidemiological observations by county (mock)</b>',
     titlefont: {
       family: 'Times New Roman, serif',
       color: 'rgb(95, 95, 95)',
@@ -213,7 +213,7 @@ function perCountyBarLayout() {
       title: '<b>County</b>',
       domain: [0, 1]
     },
-    yaxis: { title: 'Number of firms' },
+    yaxis: { title: 'Number of observations' },
 
     font: { family: 'Arial, sans-serif' }
   };

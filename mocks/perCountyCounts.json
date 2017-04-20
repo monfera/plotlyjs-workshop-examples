@@ -1,29 +1,7 @@
 {
-  "responseHeader":{
-    "status":0,
-    "QTime":156,
-    "params":{
-      "q":"*",
-      "json.facet":"{ potential_companies_per_state : { type : terms, limit: 20000, field: forradrfylkenavn_str }}",
-      "larebedrift_fq":"((vigo_grep6:* AND vigo_godkjent_til_dato:[NOW-1DAY TO *]) OR (styrk_grep6_hovedlop:*)) OR {!parent which=path:2.virksomhet.forelder v='forelder_vigo_grep6:* AND forelder_vigo_avstand:1 AND forelder_vigo_godkjent_til_dato:[NOW-1DAY TO *]'}",
-      "fq":[
-        "leaf_node:1",
-        "{!parent which=path:1.virksomhet v=$larebedrift_fq}"
-      ],
-      "rows":"0",
-      "wt":"json"
-    }
-  },
-  "response":{
-    "numFound":168293,
-    "start":0,
-    "docs":[
-
-    ]
-  },
   "facets":{
     "count":168293,
-    "potential_companies_per_state":{
+    "events_per_state":{
       "buckets":[
         {
           "val":"Oslo",
