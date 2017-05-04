@@ -1,6 +1,16 @@
 var d3 = Plotly.d3;
 var $ = flyd.stream;
 var _ = require('./lift.js');
+var mostify = require('@partially-applied/mostify').withError;
+
+var d3fetches = {
+  json: d3.json,
+  xml: d3.xml
+};
+
+var d3most = mostify(d3fetches);
+
+
 
 var countyGeoContainer = d3.select('body')
   .append('div')
@@ -54,6 +64,10 @@ var perMunicipalityBucketPayload$ = $();
 var perCountyGeojsonPayload$ = $();
 var municipalityFeaturesForCounty$ = $();
 var perMunicipalityGeojsonPayload$ = $();
+
+var pcbp = d3most.json('/mocks/perCountyCounts.json');
+
+pcbp.observe(function(v) {debugger});
 
 d3.json('/mocks/perCountyCounts.json', perCountyBucketPayload$);
 d3.json('mocks/fylker.geojson', perCountyGeojsonPayload$);

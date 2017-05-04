@@ -9,6 +9,8 @@
   "author": "Robert Monfera <monfera.robert@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "@partially-applied/mostify": "^1.0.2",
+    "most": "^1.2.2",
     "plotly.js": "^1.25.0"
   }
 }
